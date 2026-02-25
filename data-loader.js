@@ -1,21 +1,39 @@
 /**
  * data-loader.js — Load local GeoJSON datasets
  *
- * Expected files in /data/:
- *   nh-boundary.geojson
- *   watersheds-huc8.geojson
- *   watersheds-huc10.geojson  (optional)
- *   trails.geojson
- *
- * For the prototype we generate simplified placeholder geometry
- * so the app runs without real data files. Replace with your actual
- * GeoJSON when available.
+ * Actual file layout in /data/:
+ *   State.geojson                         — NH state boundary
+ *   nh_8.geojson                          — HUC8 watershed polygons
+ *   trails_geojson/
+ *     Trails_Ammonoosuc_River_Connecticut_River.geojson
+ *     Trails_Ashuelot_River_Connecticut_River.geojson
+ *     ... (16 files total, one per watershed region)
  */
 
 const DataLoader = (() => {
 
+  // All 16 trail files
+  const TRAIL_FILES = [
+    'Trails_Ammonoosuc_River_Connecticut_River.geojson',
+    'Trails_Ashuelot_River_Connecticut_River.geojson',
+    'Trails_Black_River_Connecticut_River.geojson',
+    'Trails_Contoocook_River.geojson',
+    'Trails_Headwaters_Connecticut_River.geojson',
+    'Trails_Lower_Androscoggin_River.geojson',
+    'Trails_Merrimack_River.geojson',
+    'Trails_Millers_River.geojson',
+    'Trails_Nashua_River.geojson',
+    'Trails_Pemigewasset_River.geojson',
+    'Trails_Piscataqua_Salmon_Falls.geojson',
+    'Trails_Saco_River.geojson',
+    'Trails_Upper_Androscoggin_River.geojson',
+    'Trails_Waits_River_Connecticut_River.geojson',
+    'Trails_West_River_Connecticut_River.geojson',
+    'Trails_Winnipesaukee_River.geojson',
+  ];
+
   /**
-   * Attempt to fetch a GeoJSON file; if missing, return a placeholder.
+   * Fetch a single GeoJSON file. Returns parsed object or null on failure.
    */
   async function loadGeoJSON(path) {
     try {
@@ -23,32 +41,78 @@ const DataLoader = (() => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {
-      console.warn(`Could not load ${path} — using placeholder data.`);
+      console.warn(`Could not load ${path}:`, e.message);
       return null;
     }
   }
 
   /**
-   * Load all base layers. Returns { boundary, watersheds, trails }.
+   * Load all 16 trail GeoJSONs and merge into a single FeatureCollection.
+   * Each feature gets a `watershed` property derived from the filename.
    */
-  async function loadAll() {
-    const [boundary, watersheds, trails] = await Promise.all([
-      loadGeoJSON('data/nh-boundary.geojson'),
-      loadGeoJSON('data/watersheds-huc8.geojson'),
-      loadGeoJSON('data/trails.geojson'),
-    ]);
+  async function loadAllTrails() {
+    const promises = TRAIL_FILES.map(filename => {
+      const path = `data/trails_geojson/${filename}`;
+      return loadGeoJSON(path).then(geojson => {
+        if (!geojson) return [];
+
+        // "Trails_Saco_River.geojson" → "Saco River"
+        const watershedName = filename
+          .replace(/^Trails_/, '')
+          .replace(/\.geojson$/, '')
+          .replace(/_/g, ' ');
+
+        const features = geojson.features || [];
+        features.forEach(f => {
+          f.properties = f.properties || {};
+          f.properties.watershed = watershedName;
+          if (!f.properties.name) {
+            f.properties.name = f.properties.TRAIL_NAME
+              || f.properties.Name
+              || f.properties.NAME
+              || f.properties.trail_name
+              || `Trail (${watershedName})`;
+          }
+        });
+        return features;
+      });
+    });
+
+    const allArrays = await Promise.all(promises);
+    const mergedFeatures = allArrays.flat();
+    console.log(`Loaded ${mergedFeatures.length} trail features from ${TRAIL_FILES.length} files.`);
 
     return {
-      boundary:   boundary   || generatePlaceholderBoundary(),
-      watersheds: watersheds || generatePlaceholderWatersheds(),
-      trails:     trails     || generatePlaceholderTrails(),
+      type: 'FeatureCollection',
+      features: mergedFeatures,
     };
   }
 
-  // ---- Placeholder generators (simplified geometry for demo) ---- //
+  /**
+   * Load all base layers.
+   * Returns { boundary, watersheds, trails }
+   */
+  async function loadAll() {
+    const [boundary, watersheds, trails] = await Promise.all([
+      loadGeoJSON('data/State.geojson'),
+      loadGeoJSON('data/nh_8.geojson'),
+      loadAllTrails(),
+    ]);
 
-  function generatePlaceholderBoundary() {
-    // Simplified NH outline
+    if (!boundary)   console.error('⚠ State.geojson failed to load');
+    if (!watersheds) console.error('⚠ nh_8.geojson failed to load');
+    if (!trails.features.length) console.warn('⚠ No trail features loaded');
+
+    return {
+      boundary:   boundary   || fallbackBoundary(),
+      watersheds: watersheds || fallbackWatersheds(),
+      trails:     trails,
+    };
+  }
+
+  // ---- Minimal fallbacks (only if real files are missing) ---- //
+
+  function fallbackBoundary() {
     return {
       type: 'FeatureCollection',
       features: [{
@@ -69,8 +133,7 @@ const DataLoader = (() => {
     };
   }
 
-  function generatePlaceholderWatersheds() {
-    // Generate a grid of ~12 watershed polygons covering NH
+  function fallbackWatersheds() {
     const features = [];
     const names = [
       'Upper Connecticut', 'Androscoggin', 'Saco',
@@ -82,7 +145,6 @@ const DataLoader = (() => {
     const west = -72.55, east = -70.70, south = 42.70, north = 45.30;
     const dLng = (east - west) / cols;
     const dLat = (north - south) / rows;
-
     let idx = 0;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -90,70 +152,16 @@ const DataLoader = (() => {
         const ne = [west + (c + 1) * dLng, south + (r + 1) * dLat];
         features.push({
           type: 'Feature',
-          properties: {
-            huc8: `0108000${idx + 1}`,
-            name: names[idx] || `Watershed ${idx + 1}`,
-          },
+          properties: { huc8: `0108000${idx + 1}`, name: names[idx] || `Watershed ${idx + 1}` },
           geometry: {
             type: 'Polygon',
-            coordinates: [[
-              [sw[0], sw[1]],
-              [ne[0], sw[1]],
-              [ne[0], ne[1]],
-              [sw[0], ne[1]],
-              [sw[0], sw[1]],
-            ]]
+            coordinates: [[ [sw[0],sw[1]], [ne[0],sw[1]], [ne[0],ne[1]], [sw[0],ne[1]], [sw[0],sw[1]] ]]
           }
         });
         idx++;
       }
     }
     return { type: 'FeatureCollection', features };
-  }
-
-  function generatePlaceholderTrails() {
-    // A few representative trail lines
-    const trails = [
-      {
-        name: 'Appalachian Trail — NH Section',
-        coords: [
-          [-72.10, 43.50], [-71.90, 43.80], [-71.70, 44.10],
-          [-71.68, 44.27], [-71.30, 44.50], [-71.30, 44.90]
-        ]
-      },
-      {
-        name: 'Franconia Ridge Trail',
-        coords: [[-71.65, 44.12], [-71.63, 44.16], [-71.60, 44.18]]
-      },
-      {
-        name: 'Presidential Range Trail',
-        coords: [[-71.35, 44.25], [-71.30, 44.28], [-71.28, 44.30], [-71.25, 44.27]]
-      },
-      {
-        name: 'Monadnock Trail',
-        coords: [[-72.11, 42.86], [-72.10, 42.87], [-72.09, 42.86]]
-      },
-      {
-        name: 'Wapack Trail',
-        coords: [[-71.90, 42.82], [-71.88, 42.90], [-71.86, 42.96]]
-      },
-      {
-        name: 'Cohos Trail',
-        coords: [[-71.40, 44.60], [-71.38, 44.80], [-71.30, 45.00], [-71.35, 45.20]]
-      },
-    ];
-
-    return {
-      type: 'FeatureCollection',
-      features: trails.map((t, i) => ({
-        type: 'Feature',
-        properties: { name: t.name, id: `trail_${i}` },
-        geometry: {
-          type: 'LineString',
-          coordinates: t.coords,
-        }
-      }))
-    };
   }
 
   return { loadAll };
