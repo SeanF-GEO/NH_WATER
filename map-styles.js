@@ -121,8 +121,15 @@ const MapStyles = (() => {
    */
   function watershedPopup(feature) {
     const p = feature.properties;
+    // Try common HUC8 property name variants
+    const wsName = p.name || p.Name || p.NAME
+      || p.huc8_name || p.HU_8_NAME || p.HUC_NAME
+      || p.huc8 || p.HUC8 || p.HU_8_ID
+      || 'Watershed';
+    const hucCode = p.huc8 || p.HUC8 || p.HU_8_ID || p.huc_8 || '';
     return `
-      <strong>${p.name || p.huc8 || 'Watershed'}</strong><br/>
+      <strong>${wsName}</strong><br/>
+      ${hucCode ? `<span style="color:#6e7f5e;font-size:0.72rem;">HUC8: ${hucCode}</span><br/>` : ''}
       <span style="color:#a3b48e;">
         Observations: <b style="color:#7ecf5a;">${p.obsCount || 0}</b><br/>
         Density: ${p.obsDensity || 0} / km²
@@ -137,8 +144,12 @@ const MapStyles = (() => {
     const p = feature.properties;
     const score = p.scoreNorm || 0;
     const stars = score > 0.75 ? '★★★' : score > 0.5 ? '★★' : score > 0.25 ? '★' : '—';
+    const wsLabel = p.watershed
+      ? `<span style="color:#6e7f5e;font-size:0.72rem;">${p.watershed} watershed</span><br/>`
+      : '';
     return `
       <strong>${p.name || 'Trail'}</strong><br/>
+      ${wsLabel}
       <span style="color:#a3b48e;">
         Nearby observations: <b style="color:#f0b429;">${p.obsNearby || 0}</b><br/>
         Sighting likelihood: ${stars}
