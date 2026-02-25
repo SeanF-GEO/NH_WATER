@@ -376,7 +376,7 @@
         const pct = (ws.properties.obsCount / maxWS * 100).toFixed(0);
         html += `
           <div class="result-row">
-            <span class="name">${ws.properties.name || ws.properties.huc8}</span>
+            <span class="name">${ws.properties.displayName || ws.properties.name || ws.properties.huc8}</span>
             <span class="value">${ws.properties.obsCount}</span>
           </div>
           <div class="density-bar">
