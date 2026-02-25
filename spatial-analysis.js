@@ -152,11 +152,20 @@ const SpatialAnalysis = (() => {
 
   /**
    * Get ranked list of watersheds by observation count (descending).
+   * Normalizes the display name from common HUC8 property variants.
    */
   function rankWatersheds(watersheds) {
     return [...watersheds.features]
       .filter(f => f.properties.obsCount > 0)
-      .sort((a, b) => b.properties.obsCount - a.properties.obsCount);
+      .sort((a, b) => b.properties.obsCount - a.properties.obsCount)
+      .map(f => {
+        // Ensure a .displayName for the results panel
+        const p = f.properties;
+        p.displayName = p.name || p.Name || p.NAME
+          || p.huc8_name || p.HU_8_NAME || p.HUC_NAME
+          || p.huc8 || p.HUC8 || 'Watershed';
+        return f;
+      });
   }
 
   /**
