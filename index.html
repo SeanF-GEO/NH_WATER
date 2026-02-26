@@ -642,19 +642,16 @@ console.log('🌿 NH Biodiversity Explorer ready');
 
 /* ═══════════════════════════════════════════════════════════
    3D TERRAIN VIEWER MODULE
-   Uses MapLibre GL JS + free AWS/Mapzen terrain tiles
-   No API key required — fully static
+   Syncs watersheds, observation points, and trails to 3D
    ═══════════════════════════════════════════════════════════ */
 
 let map3d = null;
 let mode3d = false;
 let highlighted3dWs = null;
-
-const WS_BORDER_COLORS_3D = {};
-wsGJ.features.forEach((f,i) => { WS_BORDER_COLORS_3D[f.properties.name] = WC[i % WC.length]; });
+let map3dLoaded = false;
 
 function init3dMap() {
-  if (map3d) return; // already initialized
+  if (map3d) return;
 
   map3d = new maplibregl.Map({
     container: 'map3d',
@@ -731,47 +728,46 @@ function init3dMap() {
   map3d.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
 
   map3d.on('load', () => {
-    // Add HUC8 watershed source
-    map3d.addSource('watersheds', {
-      type: 'geojson',
-      data: wsGJ
-    });
+    map3dLoaded = true;
 
-    // Fill layer — semi-transparent
+    /* ── Watershed polygons ── */
+    map3d.addSource('watersheds', { type: 'geojson', data: wsGJ });
+
+    // Fill — visible but not overpowering
     map3d.addLayer({
       id: 'ws-fill',
       type: 'fill',
       source: 'watersheds',
       paint: {
-        'fill-color': 'rgba(0,232,180,0.04)',
-        'fill-opacity': 0.6
+        'fill-color': ['match', ['get', 'name'],
+          ...wsGJ.features.flatMap((f,i) => [f.properties.name, WC[i % WC.length]]),
+          '#00e8b4'
+        ],
+        'fill-opacity': 0.12
       }
     });
 
-    // Highlighted fill — initially hidden via filter
+    // Highlight fill
     map3d.addLayer({
       id: 'ws-fill-highlight',
       type: 'fill',
       source: 'watersheds',
-      paint: {
-        'fill-color': 'rgba(0,232,180,0.12)',
-        'fill-opacity': 0.8
-      },
+      paint: { 'fill-color': '#00ffc8', 'fill-opacity': 0.2 },
       filter: ['==', 'name', '']
     });
 
-    // Border lines
+    // Borders — bright and thick
     map3d.addLayer({
       id: 'ws-lines',
       type: 'line',
       source: 'watersheds',
       paint: {
         'line-color': ['match', ['get', 'name'],
-          ...wsGJ.features.flatMap(f => [f.properties.name, WS_BORDER_COLORS_3D[f.properties.name] || '#00e8b4']),
+          ...wsGJ.features.flatMap((f,i) => [f.properties.name, WC[i % WC.length]]),
           '#00e8b4'
         ],
-        'line-width': 2.5,
-        'line-opacity': 0.85
+        'line-width': 3,
+        'line-opacity': 0.9
       }
     });
 
@@ -780,55 +776,162 @@ function init3dMap() {
       id: 'ws-lines-highlight',
       type: 'line',
       source: 'watersheds',
-      paint: {
-        'line-color': '#00ffc8',
-        'line-width': 5,
-        'line-opacity': 1
-      },
+      paint: { 'line-color': '#00ffc8', 'line-width': 6, 'line-opacity': 1 },
       filter: ['==', 'name', '']
     });
 
-    // Watershed name labels
+    // Labels
     map3d.addLayer({
       id: 'ws-labels',
       type: 'symbol',
       source: 'watersheds',
       layout: {
         'text-field': ['get', 'name'],
-        'text-size': 13,
+        'text-size': 14,
         'text-font': ['Open Sans Regular'],
         'text-anchor': 'center',
         'text-max-width': 10,
         'text-allow-overlap': false
       },
       paint: {
-        'text-color': '#c8cdea',
-        'text-halo-color': 'rgba(5,6,13,0.9)',
-        'text-halo-width': 2
+        'text-color': '#e2e8f4',
+        'text-halo-color': 'rgba(5,6,13,0.95)',
+        'text-halo-width': 2.5
       }
     });
 
-    // Cursor and click handling
+    /* ── Trails source (empty initially) ── */
+    map3d.addSource('trails3d', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+    map3d.addLayer({
+      id: 'trails3d-line',
+      type: 'line',
+      source: 'trails3d',
+      paint: {
+        'line-color': '#8b5cf6',
+        'line-width': 3,
+        'line-opacity': 0.75
+      }
+    });
+    map3d.addLayer({
+      id: 'trails3d-labels',
+      type: 'symbol',
+      source: 'trails3d',
+      layout: {
+        'symbol-placement': 'line',
+        'text-field': ['coalesce', ['get', 'trailname'], ['get', 'TRAIL_NAME'], ['get', 'Name'], ''],
+        'text-size': 11,
+        'text-font': ['Open Sans Regular'],
+        'text-max-angle': 30,
+        'text-allow-overlap': false
+      },
+      paint: {
+        'text-color': '#c4b5fd',
+        'text-halo-color': 'rgba(5,6,13,0.9)',
+        'text-halo-width': 2
+      },
+      minzoom: 10
+    });
+
+    /* ── Observation points source (empty initially) ── */
+    map3d.addSource('obs3d', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    // Glow behind points
+    map3d.addLayer({
+      id: 'obs3d-glow',
+      type: 'circle',
+      source: 'obs3d',
+      paint: {
+        'circle-radius': 10,
+        'circle-color': ['get', '_color'],
+        'circle-opacity': 0.15,
+        'circle-blur': 1
+      }
+    });
+
+    // Points
+    map3d.addLayer({
+      id: 'obs3d-points',
+      type: 'circle',
+      source: 'obs3d',
+      paint: {
+        'circle-radius': 5,
+        'circle-color': ['get', '_color'],
+        'circle-stroke-color': '#05060d',
+        'circle-stroke-width': 1.5,
+        'circle-opacity': 0.85
+      }
+    });
+
+    /* ── Interactions ── */
     map3d.on('mouseenter', 'ws-fill', () => { map3d.getCanvas().style.cursor = 'pointer'; });
     map3d.on('mouseleave', 'ws-fill', () => { map3d.getCanvas().style.cursor = ''; });
 
     map3d.on('click', 'ws-fill', (e) => {
       if (!e.features.length) return;
-      const feat = e.features[0];
-      const name = feat.properties.name;
-      zoom3dToWatershed(name);
+      zoom3dToWatershed(e.features[0].properties.name);
     });
 
-    // Click off watersheds to reset
+    // Click an observation point for popup
+    map3d.on('click', 'obs3d-points', (e) => {
+      if (!e.features.length) return;
+      const p = e.features[0].properties;
+      const ph = p.photo ? '<img src="' + p.photo + '" style="width:100%;max-height:100px;object-fit:cover;border-radius:6px;margin-bottom:8px"/>' : '';
+      new maplibregl.Popup({ offset: 8, closeButton: true, maxWidth: '300px' })
+        .setLngLat(e.lngLat)
+        .setHTML(
+          ph + '<strong>' + (p.common || p.species) + '</strong>' +
+          '<br/><span style="color:#8892b0">' + (p.species || '') + '</span>' +
+          '<br/><span style="color:#4a5280">' + (p.date || '') + (p.user ? ' · ' + p.user : '') + '</span>' +
+          '<br/><a href="' + (p.uri || '#') + '" target="_blank" style="color:#8b5cf6">View on iNaturalist →</a>'
+        )
+        .addTo(map3d);
+    });
+    map3d.on('mouseenter', 'obs3d-points', () => { map3d.getCanvas().style.cursor = 'pointer'; });
+    map3d.on('mouseleave', 'obs3d-points', () => { map3d.getCanvas().style.cursor = ''; });
+
+    // Click a trail for popup
+    map3d.on('click', 'trails3d-line', (e) => {
+      if (!e.features.length) return;
+      const p = e.features[0].properties;
+      const name = p.trailname || p.TRAIL_NAME || p.Name || 'Trail';
+      const sys = p.trailsys || '';
+      const mi = p.miles ? ((+p.miles).toFixed(1) + ' mi') : '';
+      const co = p.community || '';
+      let html = '<strong>' + name + '</strong>';
+      if (sys) html += '<br/><span style="color:#a78bfa;font-weight:500">' + sys + '</span>';
+      if (co || mi) html += '<br/><span style="color:#8892b0">' + co + (co && mi ? ' · ' : '') + mi + '</span>';
+      new maplibregl.Popup({ offset: 8, closeButton: true, maxWidth: '300px' })
+        .setLngLat(e.lngLat)
+        .setHTML(html)
+        .addTo(map3d);
+    });
+    map3d.on('mouseenter', 'trails3d-line', () => { map3d.getCanvas().style.cursor = 'pointer'; });
+    map3d.on('mouseleave', 'trails3d-line', () => {
+      if (!map3d.queryRenderedFeatures(map3d.project(map3d.getCenter()), { layers: ['ws-fill'] }).length) {
+        map3d.getCanvas().style.cursor = '';
+      }
+    });
+
+    // Click empty space to reset
     map3d.on('click', (e) => {
-      const features = map3d.queryRenderedFeatures(e.point, { layers: ['ws-fill'] });
-      if (!features.length && highlighted3dWs) {
+      const wsHit = map3d.queryRenderedFeatures(e.point, { layers: ['ws-fill'] });
+      const obsHit = map3d.queryRenderedFeatures(e.point, { layers: ['obs3d-points'] });
+      const trHit = map3d.queryRenderedFeatures(e.point, { layers: ['trails3d-line'] });
+      if (!wsHit.length && !obsHit.length && !trHit.length && highlighted3dWs) {
         reset3dView();
       }
     });
 
+    // Sync existing data
+    sync3dLayers();
+
     console.log('🏔️ 3D Terrain viewer loaded');
-    // Fade out the hint label after a few seconds
     setTimeout(() => {
       const lbl = $('terrainLabel');
       if (lbl) { lbl.style.transition = 'opacity 1.5s'; lbl.style.opacity = '0'; setTimeout(() => lbl.style.display = 'none', 1500); }
@@ -836,20 +939,58 @@ function init3dMap() {
   });
 }
 
+/* ── Sync current 2D data into 3D layers ── */
+function sync3dLayers() {
+  if (!map3d || !map3dLoaded) return;
+
+  // Sync watersheds (updates obs counts in properties)
+  if (map3d.getSource('watersheds')) {
+    map3d.getSource('watersheds').setData(wsGJ);
+  }
+
+  // Sync observation points from all active species
+  const allPts = [];
+  species.forEach(s => {
+    s.obs.features.forEach(f => {
+      allPts.push({
+        type: 'Feature',
+        geometry: f.geometry,
+        properties: { ...f.properties, _color: s.color }
+      });
+    });
+  });
+  if (map3d.getSource('obs3d')) {
+    map3d.getSource('obs3d').setData({ type: 'FeatureCollection', features: allPts });
+  }
+}
+
+/* ── Load trails into 3D for a specific watershed ── */
+async function load3dTrails(wsName) {
+  if (!map3d || !map3dLoaded) return;
+  const trailData = await loadTrails(wsName);
+  if (trailData && map3d.getSource('trails3d')) {
+    map3d.getSource('trails3d').setData(trailData);
+  }
+}
+
+function clear3dTrails() {
+  if (!map3d || !map3dLoaded) return;
+  if (map3d.getSource('trails3d')) {
+    map3d.getSource('trails3d').setData({ type: 'FeatureCollection', features: [] });
+  }
+}
+
 function zoom3dToWatershed(name) {
   if (!map3d) return;
   highlighted3dWs = name;
 
-  // Set highlight filters
   map3d.setFilter('ws-fill-highlight', ['==', 'name', name]);
   map3d.setFilter('ws-lines-highlight', ['==', 'name', name]);
 
-  // Calculate bounds of the clicked watershed
   const feat = wsGJ.features.find(f => f.properties.name === name);
   if (!feat) return;
 
   const bounds = turf.bbox(feat);
-  // [minX, minY, maxX, maxY] = [west, south, east, north]
 
   map3d.flyTo({
     center: [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2],
@@ -860,17 +1001,19 @@ function zoom3dToWatershed(name) {
     essential: true
   });
 
-  // Popup with obs count
+  // Load trails for this watershed
+  load3dTrails(name);
+
   const oc = feat.properties._oc || 0;
   const center = turf.centerOfMass(feat);
-  const lngLat = center.geometry.coordinates;
 
   new maplibregl.Popup({ offset: 10, closeButton: true, maxWidth: '320px' })
-    .setLngLat(lngLat)
+    .setLngLat(center.geometry.coordinates)
     .setHTML(
       '<strong>' + name + '</strong>' +
       (feat.properties.huc8 ? '<br/><span style="color:#4a5280">HUC8: ' + feat.properties.huc8 + '</span>' : '') +
-      (oc ? '<br/><span style="color:#8892b0">' + oc + ' observations</span>' : '')
+      (oc ? '<br/><span style="color:#8892b0">' + oc + ' observations</span>' : '') +
+      (TRAIL_FILES[name] ? '<br/><span style="color:#8b5cf6">Loading trails…</span>' : '')
     )
     .addTo(map3d);
 }
@@ -880,6 +1023,7 @@ function reset3dView() {
   highlighted3dWs = null;
   map3d.setFilter('ws-fill-highlight', ['==', 'name', '']);
   map3d.setFilter('ws-lines-highlight', ['==', 'name', '']);
+  clear3dTrails();
 
   map3d.flyTo({
     center: [-72.1, 43.8],
@@ -899,7 +1043,6 @@ $('btn2d').addEventListener('click', () => {
   $('map').classList.remove('hidden');
   $('map3d').classList.remove('active');
   $('layerToggles2d').style.display = '';
-  // Refresh Leaflet map size since it was hidden
   map.invalidateSize();
 });
 
@@ -911,16 +1054,19 @@ $('btn3d').addEventListener('click', () => {
   $('map').classList.add('hidden');
   $('map3d').classList.add('active');
   $('layerToggles2d').style.display = 'none';
-  // Initialize 3D map on first use
   init3dMap();
   if (map3d) {
     map3d.resize();
-    // Sync watershed obs counts to 3D if available
-    if (map3d.getSource('watersheds')) {
-      map3d.getSource('watersheds').setData(wsGJ);
-    }
+    sync3dLayers();
   }
 });
+
+/* ── Also sync 3D whenever species data changes ── */
+const _origRebuildPoints = rebuildPoints;
+rebuildPoints = function() {
+  _origRebuildPoints();
+  if (mode3d) sync3dLayers();
+};
 })();
 </script>
 </body>
