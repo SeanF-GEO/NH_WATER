@@ -8,116 +8,219 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --void:#090a12;--night:#0e1019;--dusk:#151726;--twilight:#1c1f34;
-  --mist:#272b4a;--fog:#3b4068;
-  --blood:#8b2030;--crimson:#b83050;--ember:#d4785c;--amber:#c9a050;
-  --gold:#daa520;--moon:#c8cdea;--silver:#949cc0;--frost:#eceef8;
-  --inat:#85bb40;--ebird:#5ca0e0;
-  --text1:#e6e8f4;--text2:#949cc0;--text3:#585e80;
-  --bdr:#222540;--bdr2:#343868;
-  --fd:'Cormorant Garamond',Georgia,serif;
-  --fb:'Outfit',system-ui,sans-serif;
-  --sb:380px;--rad:10px;
-  --ease:cubic-bezier(.25,.46,.45,.94);
+:root {
+  --void: #090a12; --night: #0e1019; --dusk: #151726; --twilight: #1c1f34;
+  --mist: #272b4a; --fog: #3b4068;
+  --blood: #8b2030; --crimson: #b83050; --ember: #d4785c; --amber: #c9a050;
+  --gold: #daa520; --moon: #c8cdea; --silver: #949cc0; --frost: #eceef8;
+  --inat: #85bb40; --ebird: #5ca0e0;
+  --text1: #e6e8f4; --text2: #949cc0; --text3: #585e80;
+  --bdr: #222540; --bdr2: #343868;
+  --fd: 'Cormorant Garamond', Georgia, serif;
+  --fb: 'Outfit', system-ui, sans-serif;
+  --sb: 380px; --rad: 10px;
+  --ease: cubic-bezier(.25,.46,.45,.94);
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--void);color:var(--text1);-webkit-font-smoothing:antialiased}
-.sidebar{position:fixed;top:0;left:0;width:var(--sb);height:100vh;background:var(--night);border-right:1px solid var(--bdr);display:flex;flex-direction:column;z-index:1000;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--fog) transparent}
-.sidebar::-webkit-scrollbar{width:5px}.sidebar::-webkit-scrollbar-thumb{background:var(--fog);border-radius:3px}
-.sb-hd{padding:28px 28px 22px;border-bottom:1px solid var(--bdr);position:relative;overflow:hidden}
-.sb-hd::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 25% 80%,rgba(139,32,48,.18),transparent 55%),radial-gradient(ellipse at 75% 15%,rgba(60,50,140,.12),transparent 50%);pointer-events:none}
-.hd-eye{font-size:.56rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--crimson);margin-bottom:8px;position:relative}
-.hd-t{font-family:var(--fd);font-size:1.85rem;font-weight:700;line-height:1.08;color:var(--frost);position:relative}
-.hd-s{font-family:var(--fd);font-size:.9rem;font-weight:400;font-style:italic;color:var(--silver);margin-top:5px;position:relative}
-.pnl{padding:20px 28px;border-bottom:1px solid var(--bdr)}
-.pnl-lb{display:flex;align-items:center;gap:8px;font-size:.57rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
-.sn{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:var(--silver);border:1px solid var(--bdr2);background:var(--mist)}
-.sn.on{background:var(--blood);color:var(--frost);border-color:var(--crimson)}
-.sw{position:relative}
-.si-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;transition:color .2s}
-.sinp{width:100%;padding:13px 16px 13px 42px;background:var(--dusk);border:1.5px solid var(--bdr);border-radius:var(--rad);color:var(--text1);font-family:var(--fb);font-size:.9rem;outline:none;transition:border-color .3s,box-shadow .3s}
-.sinp::placeholder{color:var(--text3);font-weight:300}
-.sinp:focus{border-color:var(--crimson);box-shadow:0 0 0 3px rgba(184,48,80,.15)}
-.sinp:focus~.si-icon{color:var(--crimson)}
-.shint{font-size:.68rem;color:var(--text3);margin-top:8px;font-style:italic;font-family:var(--fd)}
-.sugs{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--twilight);border:1px solid var(--bdr2);border-radius:var(--rad);max-height:320px;overflow-y:auto;z-index:100;box-shadow:0 16px 50px rgba(0,0,0,.6);display:none}
-.sugs.open{display:block}
-.sg{padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--bdr);transition:background .12s;display:flex;align-items:center;gap:12px}
-.sg:last-child{border-bottom:none}.sg:hover{background:var(--mist)}
-.sg-img{width:42px;height:42px;border-radius:8px;object-fit:cover;background:var(--dusk);flex-shrink:0;border:1px solid var(--bdr)}
-.sg-info{flex:1;min-width:0}
-.sg-c{font-size:.88rem;font-weight:600;color:var(--frost);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sg-s{font-size:.72rem;color:var(--silver);font-style:italic;font-family:var(--fd)}
-.sg-r{font-size:.52rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--crimson);background:rgba(184,48,80,.12);padding:2px 7px;border-radius:4px;border:1px solid rgba(184,48,80,.2);flex-shrink:0}
-.badge{margin-top:14px;padding:12px 16px;background:linear-gradient(135deg,rgba(139,32,48,.1),rgba(60,50,140,.08));border:1px solid rgba(184,48,80,.2);border-radius:var(--rad);display:none;align-items:center;gap:12px;animation:fu .35s var(--ease)}
-.badge.vis{display:flex}
-@keyframes fu{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-.b-img{width:38px;height:38px;border-radius:8px;object-fit:cover;background:var(--dusk);border:1px solid var(--bdr)}
-.b-txt{flex:1;min-width:0}
-.b-c{font-weight:600;font-size:.88rem;color:var(--ember)}
-.b-s{font-size:.72rem;color:var(--silver);font-style:italic;font-family:var(--fd)}
-.b-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1.3rem;line-height:1;padding:4px;border-radius:4px;transition:color .15s}.b-x:hover{color:var(--crimson)}
-.tg{display:flex;flex-direction:column;gap:5px}
-.tl{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.82rem;color:var(--text2);user-select:none;padding:4px 0}
-.tl input{display:none}
-.tt{width:34px;height:18px;background:var(--dusk);border:1px solid var(--bdr);border-radius:9px;position:relative;flex-shrink:0;transition:background .25s,border-color .25s}
-.tt::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;background:var(--text3);border-radius:50%;transition:transform .25s var(--ease),background .25s}
-.tl input:checked+.tt{background:rgba(184,48,80,.15);border-color:rgba(184,48,80,.4)}
-.tl input:checked+.tt::after{transform:translateX(16px);background:var(--crimson)}
-.tl-lb{display:flex;align-items:center;gap:7px}
-.sd{width:7px;height:7px;border-radius:50%}.sd.i{background:var(--inat)}.sd.e{background:var(--ebird)}
-.rp{display:none}.rp.vis{display:block}
-.rs{margin-bottom:18px}
-.rs h4{font-family:var(--fd);font-size:.95rem;font-weight:700;color:var(--frost);margin-bottom:10px}
-.rr{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0}
-.rn{color:var(--text2);font-size:.8rem;max-width:195px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rv{font-weight:700;font-size:.82rem;font-variant-numeric:tabular-nums;color:var(--ember)}
-.rv.t{color:var(--gold)}
-.rb{height:4px;background:var(--bdr);border-radius:2px;margin:3px 0 8px;overflow:hidden}
-.rb-f{height:100%;border-radius:2px;transition:width .6s var(--ease)}
-.nr{font-size:.78rem;color:var(--text3);font-style:italic;font-family:var(--fd)}
-.hero-card{padding:10px 14px;background:linear-gradient(135deg,rgba(184,48,80,.1),rgba(60,50,140,.06));border:1px solid rgba(184,48,80,.2);border-radius:8px;margin-bottom:10px}
-.hero-name{font-family:var(--fd);font-size:1rem;font-weight:700;color:var(--ember)}
-.hero-sub{font-size:.78rem;color:var(--text2)}
-.sb-ft{margin-top:auto;padding:18px 28px;border-top:1px solid var(--bdr);background:var(--dusk)}
-.st-r{display:flex;justify-content:space-between}
-.stat{text-align:center}
-.st-v{display:block;font-family:var(--fd);font-size:1.35rem;font-weight:700;color:var(--ember);line-height:1.2}
-.st-l{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-weight:500}
-#map{position:fixed;top:0;left:var(--sb);right:0;bottom:0;z-index:1;background:var(--void)}
-.ld{position:fixed;top:0;left:var(--sb);right:0;bottom:0;background:rgba(9,10,18,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:2000}
-.ld.vis{display:flex}
-.sp{width:38px;height:38px;border:3px solid var(--bdr);border-top-color:var(--crimson);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.lm{font-size:.82rem;color:var(--silver);font-family:var(--fd);font-style:italic}
-.leaflet-popup-content-wrapper{background:var(--twilight)!important;color:var(--text1)!important;border-radius:var(--rad)!important;border:1px solid var(--bdr2)!important;box-shadow:0 12px 45px rgba(0,0,0,.6)!important}
-.leaflet-popup-tip{background:var(--twilight)!important}
-.leaflet-popup-content{font-family:var(--fb)!important;font-size:.8rem!important;line-height:1.55!important;margin:12px 16px!important}
-.leaflet-popup-content strong{color:var(--ember);font-family:var(--fd);font-size:.95rem}
-.leaflet-popup-content a{color:var(--moon);text-decoration:none}
-.leaflet-popup-content a:hover{text-decoration:underline}
-.leaflet-popup-close-button{color:var(--text3)!important;font-size:18px!important}
-.leaflet-control-zoom a{background:var(--twilight)!important;color:var(--frost)!important;border-color:var(--bdr)!important}
-.leaflet-control-zoom a:hover{background:var(--mist)!important}
-.leaflet-control-attribution{background:rgba(14,16,25,.9)!important;color:var(--text3)!important;font-size:.55rem!important}
-.leaflet-control-attribution a{color:var(--silver)!important}
-.legend{background:var(--twilight);border:1px solid var(--bdr2);border-radius:var(--rad);padding:14px 18px;font-size:.7rem;color:var(--text2);line-height:1.8}
-.legend-t{font-weight:600;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
-.legend-r{display:flex;align-items:center;gap:8px}
-.legend-s{width:20px;height:11px;border-radius:3px;flex-shrink:0;border:1px solid rgba(255,255,255,.06)}
-.ws-tip{background:var(--twilight)!important;color:var(--frost)!important;border:1px solid var(--bdr2)!important;border-radius:6px!important;padding:4px 10px!important;font-family:var(--fd)!important;font-size:.82rem!important;font-weight:600!important;box-shadow:0 6px 20px rgba(0,0,0,.4)!important}
-.ws-tip::before{border-top-color:var(--twilight)!important}
-@media(max-width:800px){:root{--sb:100vw}.sidebar{width:100%;height:auto;max-height:42vh;position:relative}#map{position:relative;left:0;height:58vh}body{overflow-y:auto}.ld{left:0}}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: var(--fb); background: var(--void); color: var(--text1); -webkit-font-smoothing: antialiased; }
+
+/* Sidebar */
+.sidebar {
+  position: fixed; top: 0; left: 0; width: var(--sb); height: 100vh;
+  background: var(--night); border-right: 1px solid var(--bdr);
+  display: flex; flex-direction: column; z-index: 1000;
+  overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--fog) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--fog); border-radius: 3px; }
+
+.sb-hd {
+  padding: 28px 28px 22px; border-bottom: 1px solid var(--bdr);
+  position: relative; overflow: hidden;
+}
+.sb-hd::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 25% 80%, rgba(139,32,48,.18), transparent 55%),
+              radial-gradient(ellipse at 75% 15%, rgba(60,50,140,.12), transparent 50%);
+  pointer-events: none;
+}
+.hd-eye { font-size: .56rem; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--crimson); margin-bottom: 8px; position: relative; }
+.hd-t { font-family: var(--fd); font-size: 1.85rem; font-weight: 700; line-height: 1.08; color: var(--frost); position: relative; }
+.hd-s { font-family: var(--fd); font-size: .9rem; font-weight: 400; font-style: italic; color: var(--silver); margin-top: 5px; position: relative; }
+
+/* Panels */
+.pnl { padding: 20px 28px; border-bottom: 1px solid var(--bdr); }
+.pnl-lb { display: flex; align-items: center; gap: 8px; font-size: .57rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+.sn { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .58rem; font-weight: 700; color: var(--silver); border: 1px solid var(--bdr2); background: var(--mist); }
+.sn.on { background: var(--blood); color: var(--frost); border-color: var(--crimson); }
+
+/* Search */
+.sw { position: relative; }
+.si-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; transition: color .2s; }
+.sinp {
+  width: 100%; padding: 13px 16px 13px 42px;
+  background: var(--dusk); border: 1.5px solid var(--bdr); border-radius: var(--rad);
+  color: var(--text1); font-family: var(--fb); font-size: .9rem; outline: none;
+  transition: border-color .3s, box-shadow .3s;
+}
+.sinp::placeholder { color: var(--text3); font-weight: 300; }
+.sinp:focus { border-color: var(--crimson); box-shadow: 0 0 0 3px rgba(184,48,80,.15); }
+.sinp:focus ~ .si-icon { color: var(--crimson); }
+.shint { font-size: .68rem; color: var(--text3); margin-top: 8px; font-style: italic; font-family: var(--fd); }
+
+/* Suggestions dropdown */
+.sugs {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--twilight); border: 1px solid var(--bdr2); border-radius: var(--rad);
+  max-height: 320px; overflow-y: auto; z-index: 100;
+  box-shadow: 0 16px 50px rgba(0,0,0,.6); display: none;
+}
+.sugs.open { display: block; }
+.sg { padding: 11px 16px; cursor: pointer; border-bottom: 1px solid var(--bdr); transition: background .12s; display: flex; align-items: center; gap: 12px; }
+.sg:last-child { border-bottom: none; }
+.sg:hover { background: var(--mist); }
+.sg-img { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; background: var(--dusk); flex-shrink: 0; border: 1px solid var(--bdr); }
+.sg-info { flex: 1; min-width: 0; }
+.sg-c { font-size: .88rem; font-weight: 600; color: var(--frost); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sg-s { font-size: .72rem; color: var(--silver); font-style: italic; font-family: var(--fd); }
+.sg-r { font-size: .52rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--crimson); background: rgba(184,48,80,.12); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(184,48,80,.2); flex-shrink: 0; }
+
+/* Selected species badge */
+.badge {
+  margin-top: 14px; padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(139,32,48,.1), rgba(60,50,140,.08));
+  border: 1px solid rgba(184,48,80,.2); border-radius: var(--rad);
+  display: none; align-items: center; gap: 12px;
+  animation: fu .35s var(--ease);
+}
+.badge.vis { display: flex; }
+@keyframes fu { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.b-img { width: 38px; height: 38px; border-radius: 8px; object-fit: cover; background: var(--dusk); border: 1px solid var(--bdr); }
+.b-txt { flex: 1; min-width: 0; }
+.b-c { font-weight: 600; font-size: .88rem; color: var(--ember); }
+.b-s { font-size: .72rem; color: var(--silver); font-style: italic; font-family: var(--fd); }
+.b-x { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.3rem; line-height: 1; padding: 4px; border-radius: 4px; transition: color .15s; }
+.b-x:hover { color: var(--crimson); }
+
+/* Toggles */
+.tg { display: flex; flex-direction: column; gap: 5px; }
+.tl { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: .82rem; color: var(--text2); user-select: none; padding: 4px 0; }
+.tl input { display: none; }
+.tt { width: 34px; height: 18px; background: var(--dusk); border: 1px solid var(--bdr); border-radius: 9px; position: relative; flex-shrink: 0; transition: background .25s, border-color .25s; }
+.tt::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: var(--text3); border-radius: 50%; transition: transform .25s var(--ease), background .25s; }
+.tl input:checked + .tt { background: rgba(184,48,80,.15); border-color: rgba(184,48,80,.4); }
+.tl input:checked + .tt::after { transform: translateX(16px); background: var(--crimson); }
+.tl-lb { display: flex; align-items: center; gap: 7px; }
+.sd { width: 7px; height: 7px; border-radius: 50%; }
+.sd.i { background: var(--inat); }
+.sd.e { background: var(--ebird); }
+
+/* Results panel */
+.rp { display: none; }
+.rp.vis { display: block; }
+.rs { margin-bottom: 18px; }
+.rs h4 { font-family: var(--fd); font-size: .95rem; font-weight: 700; color: var(--frost); margin-bottom: 10px; }
+.rr { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; }
+.rn { color: var(--text2); font-size: .8rem; max-width: 195px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rv { font-weight: 700; font-size: .82rem; font-variant-numeric: tabular-nums; color: var(--ember); }
+.rv.t { color: var(--gold); }
+.rb { height: 4px; background: var(--bdr); border-radius: 2px; margin: 3px 0 8px; overflow: hidden; }
+.rb-f { height: 100%; border-radius: 2px; transition: width .6s var(--ease); }
+.nr { font-size: .78rem; color: var(--text3); font-style: italic; font-family: var(--fd); }
+.hero-card { padding: 10px 14px; background: linear-gradient(135deg, rgba(184,48,80,.1), rgba(60,50,140,.06)); border: 1px solid rgba(184,48,80,.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: background .2s; }
+.hero-card:hover { background: linear-gradient(135deg, rgba(184,48,80,.2), rgba(60,50,140,.12)); }
+.hero-name { font-family: var(--fd); font-size: 1rem; font-weight: 700; color: var(--ember); }
+.hero-sub { font-size: .78rem; color: var(--text2); }
+.hero-hint { font-size: .65rem; color: var(--crimson); margin-top: 4px; font-style: italic; }
+
+/* Watershed click hint */
+.ws-click-hint {
+  font-size: .72rem; color: var(--text3); font-style: italic; font-family: var(--fd);
+  margin-top: 10px; padding: 8px 12px; background: rgba(218,165,32,.06);
+  border: 1px solid rgba(218,165,32,.15); border-radius: 6px;
+  display: none;
+}
+.ws-click-hint.vis { display: block; }
+
+/* Trail info panel */
+.trail-info {
+  margin-top: 12px; padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(218,165,32,.08), rgba(60,50,140,.04));
+  border: 1px solid rgba(218,165,32,.2); border-radius: 8px;
+  display: none;
+}
+.trail-info.vis { display: block; }
+.trail-info h5 { font-family: var(--fd); font-size: .88rem; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+.trail-info .trail-count { font-size: .75rem; color: var(--text2); margin-bottom: 6px; }
+.trail-item { font-size: .78rem; color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--bdr); display: flex; justify-content: space-between; }
+.trail-item:last-child { border-bottom: none; }
+.trail-item .tn { color: var(--frost); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trail-item .to { color: var(--gold); font-weight: 600; }
+
+/* Footer stats */
+.sb-ft { margin-top: auto; padding: 18px 28px; border-top: 1px solid var(--bdr); background: var(--dusk); }
+.st-r { display: flex; justify-content: space-between; }
+.stat { text-align: center; }
+.st-v { display: block; font-family: var(--fd); font-size: 1.35rem; font-weight: 700; color: var(--ember); line-height: 1.2; }
+.st-l { font-size: .55rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); font-weight: 500; }
+
+/* Map */
+#map { position: fixed; top: 0; left: var(--sb); right: 0; bottom: 0; z-index: 1; background: var(--void); }
+
+/* Loading overlay */
+.ld { position: fixed; top: 0; left: var(--sb); right: 0; bottom: 0; background: rgba(9,10,18,.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; }
+.ld.vis { display: flex; }
+.sp { width: 38px; height: 38px; border: 3px solid var(--bdr); border-top-color: var(--crimson); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.lm { font-size: .82rem; color: var(--silver); font-family: var(--fd); font-style: italic; }
+
+/* Leaflet overrides */
+.leaflet-popup-content-wrapper { background: var(--twilight) !important; color: var(--text1) !important; border-radius: var(--rad) !important; border: 1px solid var(--bdr2) !important; box-shadow: 0 12px 45px rgba(0,0,0,.6) !important; }
+.leaflet-popup-tip { background: var(--twilight) !important; }
+.leaflet-popup-content { font-family: var(--fb) !important; font-size: .8rem !important; line-height: 1.55 !important; margin: 12px 16px !important; }
+.leaflet-popup-content strong { color: var(--ember); font-family: var(--fd); font-size: .95rem; }
+.leaflet-popup-content a { color: var(--moon); text-decoration: none; }
+.leaflet-popup-content a:hover { text-decoration: underline; }
+.leaflet-popup-close-button { color: var(--text3) !important; font-size: 18px !important; }
+.leaflet-control-zoom a { background: var(--twilight) !important; color: var(--frost) !important; border-color: var(--bdr) !important; }
+.leaflet-control-zoom a:hover { background: var(--mist) !important; }
+.leaflet-control-attribution { background: rgba(14,16,25,.9) !important; color: var(--text3) !important; font-size: .55rem !important; }
+.leaflet-control-attribution a { color: var(--silver) !important; }
+
+/* Legend */
+.legend { background: var(--twilight); border: 1px solid var(--bdr2); border-radius: var(--rad); padding: 14px 18px; font-size: .7rem; color: var(--text2); line-height: 1.8; }
+.legend-t { font-weight: 600; font-size: .56rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+.legend-r { display: flex; align-items: center; gap: 8px; }
+.legend-s { width: 20px; height: 11px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.06); }
+
+/* Watershed tooltip */
+.ws-tip { background: var(--twilight) !important; color: var(--frost) !important; border: 1px solid var(--bdr2) !important; border-radius: 6px !important; padding: 4px 10px !important; font-family: var(--fd) !important; font-size: .82rem !important; font-weight: 600 !important; box-shadow: 0 6px 20px rgba(0,0,0,.4) !important; }
+.ws-tip::before { border-top-color: var(--twilight) !important; }
+
+/* Mobile */
+@media (max-width: 800px) {
+  :root { --sb: 100vw; }
+  .sidebar { width: 100%; height: auto; max-height: 42vh; position: relative; }
+  #map { position: relative; left: 0; height: 58vh; }
+  body { overflow-y: auto; }
+  .ld { left: 0; }
+}
 </style>
 </head>
 <body>
+
 <aside class="sidebar">
-  <div class="sb-hd"><div class="hd-eye">New Hampshire</div><h1 class="hd-t">Biodiversity Explorer</h1><p class="hd-s">Watersheds, Wildlife &amp; Trails</p></div>
+  <div class="sb-hd">
+    <div class="hd-eye">New Hampshire</div>
+    <h1 class="hd-t">Biodiversity Explorer</h1>
+    <p class="hd-s">Watersheds, Wildlife &amp; Trails</p>
+  </div>
+
   <div class="pnl">
     <label class="pnl-lb"><span class="sn on">1</span>Find a Species</label>
     <div class="sw">
@@ -125,182 +228,602 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
       <input type="text" id="inp" class="sinp" placeholder="Black Bear, Moose, Bald Eagle…" autocomplete="off"/>
       <div id="sugs" class="sugs"></div>
     </div>
-    <div class="shint">Type a common name or scientific name</div>
-    <div id="badge" class="badge"><img id="bImg" class="b-img" src="" alt=""/><div class="b-txt"><div id="bC" class="b-c"></div><div id="bS" class="b-s"></div></div><button id="bX" class="b-x">&times;</button></div>
+    <div class="shint">Type a common or scientific name</div>
+    <div id="badge" class="badge">
+      <img id="bImg" class="b-img" src="" alt=""/>
+      <div class="b-txt"><div id="bC" class="b-c"></div><div id="bS" class="b-s"></div></div>
+      <button id="bX" class="b-x">&times;</button>
+    </div>
   </div>
+
   <div class="pnl">
     <label class="pnl-lb"><span class="sn">2</span>Data &amp; Layers</label>
     <div class="tg">
       <label class="tl"><input type="checkbox" id="tINat" checked/><span class="tt"></span><span class="tl-lb"><span class="sd i"></span>iNaturalist</span></label>
       <label class="tl"><input type="checkbox" id="tEB" checked/><span class="tt"></span><span class="tl-lb"><span class="sd e"></span>eBird</span></label>
-    </div><div style="height:8px"></div>
+    </div>
+    <div style="height:8px"></div>
     <div class="tg">
       <label class="tl"><input type="checkbox" id="tWS" checked/><span class="tt"></span><span class="tl-lb">Watersheds</span></label>
-      <label class="tl"><input type="checkbox" id="tTr" checked/><span class="tt"></span><span class="tl-lb">Trails</span></label>
+      <label class="tl"><input type="checkbox" id="tTr" checked/><span class="tt"></span><span class="tl-lb">Trails (click watershed)</span></label>
       <label class="tl"><input type="checkbox" id="tHt"/><span class="tt"></span><span class="tl-lb">Heatmap</span></label>
       <label class="tl"><input type="checkbox" id="tPt" checked/><span class="tt"></span><span class="tl-lb">Observation Points</span></label>
     </div>
   </div>
-  <div class="pnl rp" id="resP"><label class="pnl-lb"><span class="sn on">3</span>Results</label><div id="resC"></div></div>
-  <div class="sb-ft"><div class="st-r"><div class="stat"><span class="st-v" id="sO">—</span><span class="st-l">Observations</span></div><div class="stat"><span class="st-v" id="sW">—</span><span class="st-l">Watersheds</span></div><div class="stat"><span class="st-v" id="sT">—</span><span class="st-l">Trails</span></div></div></div>
+
+  <div class="pnl rp" id="resP">
+    <label class="pnl-lb"><span class="sn on">3</span>Results</label>
+    <div id="resC"></div>
+    <div id="wsHint" class="ws-click-hint">Click a watershed on the map to view its trails</div>
+    <div id="trailInfo" class="trail-info">
+      <h5 id="trailTitle">Trails</h5>
+      <div id="trailCount" class="trail-count"></div>
+      <div id="trailList"></div>
+    </div>
+  </div>
+
+  <div class="sb-ft">
+    <div class="st-r">
+      <div class="stat"><span class="st-v" id="sO">&mdash;</span><span class="st-l">Observations</span></div>
+      <div class="stat"><span class="st-v" id="sW">&mdash;</span><span class="st-l">Watersheds</span></div>
+      <div class="stat"><span class="st-v" id="sT">&mdash;</span><span class="st-l">Trails</span></div>
+    </div>
+  </div>
 </aside>
+
 <div id="map"></div>
 <div id="ld" class="ld"><div><div class="sp"></div><p class="lm" id="lmsg">Loading…</p></div></div>
+
 <script>
-(async function(){
+(async function() {
 'use strict';
-const NH={swlat:42.697,swlng:-72.557,nelat:45.305,nelng:-70.703};
-const INAT='https://api.inaturalist.org/v1';
-const EBIRD_KEY='';
-const TF=['Trails_Ammonoosuc_River_Connecticut_River.geojson','Trails_Ashuelot_River_Connecticut_River.geojson','Trails_Black_River_Connecticut_River.geojson','Trails_Contoocook_River.geojson','Trails_Headwaters_Connecticut_River.geojson','Trails_Lower_Androscoggin_River.geojson','Trails_Merrimack_River.geojson','Trails_Millers_River.geojson','Trails_Nashua_River.geojson','Trails_Pemigewasset_River.geojson','Trails_Piscataqua_Salmon_Falls.geojson','Trails_Saco_River.geojson','Trails_Upper_Androscoggin_River.geojson','Trails_Waits_River_Connecticut_River.geojson','Trails_West_River_Connecticut_River.geojson','Trails_Winnipesaukee_River.geojson'];
-const WC=['#b83050','#9040a0','#6048c0','#3860d0','#2898b0','#28a078','#60a838','#a8a028','#d08828','#c05040','#d06888','#7858b8','#4078d8','#20b8a0','#48b858','#c8b030','#e06048'];
-const DC=['rgba(28,31,52,0.4)','#28385a','#384898','#7848a8','#b83868','#d04030'];
-const DB=[0,1,5,15,40,100];
-const $=id=>document.getElementById(id);
-function sL(m){$('lmsg').textContent=m;$('ld').classList.add('vis')}
-function hL(){$('ld').classList.remove('vis')}
-async function fj(p){try{const r=await fetch(p);if(!r.ok)throw r.status;return r.json()}catch(e){console.warn('Load:',p);return null}}
 
-sL('Loading watersheds & trails…');
-const[stGJ,wsGJ]=await Promise.all([fj('data/State.geojson'),fj('data/nh_8.geojson')]);
-const tArrs=await Promise.all(TF.map(f=>fj('data/'+f).then(g=>{if(!g)return[];const wn=f.replace(/^Trails_/,'').replace(/\.geojson$/,'').replace(/_/g,' ');(g.features||[]).forEach(ft=>{ft.properties=ft.properties||{};ft.properties._ws=wn;if(!ft.properties.trailname)ft.properties.trailname=ft.properties.TRAIL_NAME||ft.properties.Name||'Trail'});return g.features||[]})));
-const tGJ={type:'FeatureCollection',features:tArrs.flat()};
-console.log(tGJ.features.length+' trails, '+(wsGJ?.features?.length||0)+' watersheds');
+/* ── Config ── */
+const NH = { swlat: 42.697, swlng: -72.557, nelat: 45.305, nelng: -70.703 };
+const INAT = 'https://api.inaturalist.org/v1';
+const EBIRD_KEY = ''; // Add your eBird API key here
 
-const map=L.map('map',{center:[43.92,-71.5],zoom:8,minZoom:7,maxZoom:18});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',maxZoom:19}).addTo(map);
+// Trail files mapped to watershed names
+const TRAIL_FILES = {
+  'Ammonoosuc River-Connecticut River': 'Trails_Ammonoosuc_River_Connecticut_River.geojson',
+  'Ashuelot River-Connecticut River': 'Trails_Ashuelot_River_Connecticut_River.geojson',
+  'Black River-Connecticut River': 'Trails_Black_River_Connecticut_River.geojson',
+  'Contoocook River': 'Trails_Contoocook_River.geojson',
+  'Headwaters Connecticut River': 'Trails_Headwaters_Connecticut_River.geojson',
+  'Lower Androscoggin River': 'Trails_Lower_Androscoggin_River.geojson',
+  'Merrimack River': 'Trails_Merrimack_River.geojson',
+  'Millers River': 'Trails_Millers_River.geojson',
+  'Nashua River': 'Trails_Nashua_River.geojson',
+  'Pemigewasset River': 'Trails_Pemigewasset_River.geojson',
+  'Piscataqua-Salmon Falls': 'Trails_Piscataqua_Salmon_Falls.geojson',
+  'Saco River': 'Trails_Saco_River.geojson',
+  'Upper Androscoggin River': 'Trails_Upper_Androscoggin_River.geojson',
+  'Waits River-Connecticut River': 'Trails_Waits_River_Connecticut_River.geojson',
+  'West River-Connecticut River': 'Trails_West_River_Connecticut_River.geojson',
+  'Winnipesaukee River': 'Trails_Winnipesaukee_River.geojson'
+};
 
-let lSt;if(stGJ)lSt=L.geoJSON(stGJ,{style:{color:'#585e80',weight:1.5,opacity:.5,dashArray:'6,4'},interactive:false}).addTo(map);
+// Watershed colors
+const WC = ['#b83050','#9040a0','#6048c0','#3860d0','#2898b0','#28a078','#60a838',
+            '#a8a028','#d08828','#c05040','#d06888','#7858b8','#4078d8','#20b8a0',
+            '#48b858','#c8b030','#e06048'];
+// Density scale
+const DC = ['rgba(28,31,52,0.4)','#28385a','#384898','#7848a8','#b83868','#d04030'];
+const DB = [0, 1, 5, 15, 40, 100];
 
-const wcm={};if(wsGJ)wsGJ.features.forEach((f,i)=>{wcm[f.properties.name]=WC[i%WC.length]});
+/* ── Helpers ── */
+const $ = id => document.getElementById(id);
+function sL(m) { $('lmsg').textContent = m; $('ld').classList.add('vis'); }
+function hL() { $('ld').classList.remove('vis'); }
 
-let lWS;
-function bWS(mode){
-  if(lWS)map.removeLayer(lWS);if(!wsGJ)return;
-  lWS=L.geoJSON(wsGJ,{
-    style:f=>{
-      if(mode==='density'){
-        const n=f.properties._oc||0;let ci=0;for(let i=DB.length-1;i>=0;i--)if(n>=DB[i]){ci=i;break}
-        const top=f.properties._top;
-        return{fillColor:DC[ci],fillOpacity:top?.85:.55,color:top?'#e8e0d0':'#585e80',weight:top?3:1,opacity:top?1:.5};
-      }
-      const c=wcm[f.properties.name]||'#585e80';
-      return{fillColor:c,fillOpacity:.35,color:c,weight:1.5,opacity:.7};
-    },
-    onEachFeature:(f,ly)=>{
-      ly.on({mouseover:e=>{const d=mode==='density';e.target.setStyle({weight:3,fillOpacity:d?.9:.55,color:d?(f.properties._top?'#fff':'#c8cdea'):(wcm[f.properties.name]||'#fff')});e.target.bringToFront()},mouseout:e=>lWS.resetStyle(e.target),click:()=>{const p=f.properties;const ex=p._oc!=null?'<br/><span style="color:var(--silver)">Observations: <b style="color:#d4785c">'+p._oc+'</b><br/>Density: '+(p._od||0)+'/km²</span>':'';ly.bindPopup('<strong>'+p.name+'</strong><br/><span style="color:#585e80;font-size:.72rem">HUC8: '+p.huc8+'</span>'+ex).openPopup()}});
-      ly.bindTooltip(f.properties.name,{sticky:true,className:'ws-tip',direction:'top',offset:[0,-10]});
+async function fj(p) {
+  try {
+    const r = await fetch(p);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } catch(e) {
+    console.warn('Failed to load:', p, e);
+    return null;
+  }
+}
+
+/* ── Proj4 setup for EPSG:3437 (NH State Plane Feet) ── */
+proj4.defs('EPSG:3437', '+proj=tmerc +lat_0=42.5 +lon_0=-71.66666666666667 +k=0.999966667 +x_0=300000.0000000001 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs');
+
+function reprojectCoords(coords) {
+  // Recursively reproject coordinate arrays from EPSG:3437 to WGS84
+  if (typeof coords[0] === 'number') {
+    const [lng, lat] = proj4('EPSG:3437', 'EPSG:4326', [coords[0], coords[1]]);
+    return [lng, lat];
+  }
+  return coords.map(c => reprojectCoords(c));
+}
+
+function reprojectGeoJSON(gj) {
+  if (!gj || !gj.features) return gj;
+  const out = JSON.parse(JSON.stringify(gj));
+  out.features.forEach(f => {
+    if (f.geometry && f.geometry.coordinates) {
+      f.geometry.coordinates = reprojectCoords(f.geometry.coordinates);
     }
   });
-  if($('tWS').checked)lWS.addTo(map);
+  // Remove CRS property so Leaflet uses default WGS84
+  delete out.crs;
+  return out;
+}
+
+/* ── Trail cache ── */
+const trailCache = {};
+
+async function loadTrails(watershedName) {
+  if (trailCache[watershedName]) return trailCache[watershedName];
+  const file = TRAIL_FILES[watershedName];
+  if (!file) return null;
+  const raw = await fj('data/' + file);
+  if (!raw) return null;
+  const reprojected = reprojectGeoJSON(raw);
+  // Tag each trail with its watershed name
+  reprojected.features.forEach(f => {
+    f.properties = f.properties || {};
+    f.properties._ws = watershedName;
+    if (!f.properties.trailname) {
+      f.properties.trailname = f.properties.TRAIL_NAME || f.properties.Name || 'Trail';
+    }
+  });
+  trailCache[watershedName] = reprojected;
+  return reprojected;
+}
+
+/* ── Initialize Map ── */
+sL('Loading watersheds…');
+
+const wsGJ = await fj('data/nh_8.geojson');
+// State boundary is in EPSG:3437, reproject it
+const stRaw = await fj('data/State.geojson');
+const stGJ = stRaw ? reprojectGeoJSON(stRaw) : null;
+
+if (!wsGJ) {
+  hL();
+  alert('Could not load watershed data. Check that data/nh_8.geojson exists.');
+  return;
+}
+
+console.log(wsGJ.features.length + ' watersheds loaded');
+
+const map = L.map('map', { center: [43.92, -71.5], zoom: 8, minZoom: 7, maxZoom: 18 });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom: 19
+}).addTo(map);
+
+// State outline
+if (stGJ) {
+  L.geoJSON(stGJ, { style: { color: '#585e80', weight: 1.5, opacity: .5, dashArray: '6,4', fill: false }, interactive: false }).addTo(map);
+}
+
+// Assign colors to watersheds
+const wcm = {};
+wsGJ.features.forEach((f, i) => { wcm[f.properties.name] = WC[i % WC.length]; });
+
+/* ── Watershed Layer ── */
+let lWS, activeWatershed = null, lTr = null;
+let curSp = null, curObs = null, lObs = null, lHeat = null;
+
+function bWS(mode) {
+  if (lWS) map.removeLayer(lWS);
+  lWS = L.geoJSON(wsGJ, {
+    style: f => {
+      if (mode === 'density') {
+        const n = f.properties._oc || 0;
+        let ci = 0;
+        for (let i = DB.length - 1; i >= 0; i--) { if (n >= DB[i]) { ci = i; break; } }
+        const top = f.properties._top;
+        return {
+          fillColor: DC[ci], fillOpacity: top ? .85 : .55,
+          color: top ? '#e8e0d0' : '#585e80', weight: top ? 3 : 1, opacity: top ? 1 : .5
+        };
+      }
+      const c = wcm[f.properties.name] || '#585e80';
+      return { fillColor: c, fillOpacity: .35, color: c, weight: 1.5, opacity: .7 };
+    },
+    onEachFeature: (f, ly) => {
+      ly.on({
+        mouseover: e => {
+          const d = mode === 'density';
+          e.target.setStyle({
+            weight: 3, fillOpacity: d ? .9 : .55,
+            color: d ? (f.properties._top ? '#fff' : '#c8cdea') : (wcm[f.properties.name] || '#fff')
+          });
+          e.target.bringToFront();
+        },
+        mouseout: e => lWS.resetStyle(e.target),
+        click: async () => {
+          const p = f.properties;
+          const ex = p._oc != null
+            ? '<br/><span style="color:var(--silver)">Observations: <b style="color:#d4785c">' + p._oc + '</b><br/>Density: ' + (p._od || 0) + '/km²</span>'
+            : '';
+          const hasTrails = TRAIL_FILES[p.name];
+          const trailHint = hasTrails ? '<br/><span style="color:#daa520;font-size:.72rem">Loading trails…</span>' : '';
+          ly.bindPopup('<strong>' + p.name + '</strong><br/><span style="color:#585e80;font-size:.72rem">HUC8: ' + p.huc8 + '</span>' + ex + trailHint).openPopup();
+
+          // Load and show trails for this watershed
+          if (hasTrails) {
+            await showTrailsForWatershed(p.name);
+          }
+        }
+      });
+      ly.bindTooltip(f.properties.name, { sticky: true, className: 'ws-tip', direction: 'top', offset: [0, -10] });
+    }
+  });
+  if ($('tWS').checked) lWS.addTo(map);
 }
 bWS('default');
 
-let lTr;
-function bTr(mode){
-  if(lTr)map.removeLayer(lTr);if(!tGJ)return;
-  lTr=L.geoJSON(tGJ,{
-    style:f=>{
-      if(mode==='scored'){
-        const s=f.properties._sn||0;const top=f.properties._tt;
-        if(top)return{color:'#daa520',weight:5,opacity:1};
-        if(s>0)return{color:'#c9a050',weight:2+s*3,opacity:.3+s*.6};
-        return{color:'#343868',weight:1,opacity:.2};
+/* ── Trail display ── */
+async function showTrailsForWatershed(wsName) {
+  if (lTr) { map.removeLayer(lTr); lTr = null; }
+  activeWatershed = wsName;
+
+  const trailData = await loadTrails(wsName);
+  if (!trailData || !trailData.features.length) {
+    $('trailInfo').classList.remove('vis');
+    return;
+  }
+
+  // If we have observations, score the trails
+  let scoredTrails = trailData.features;
+  if (curObs && curObs.features.length) {
+    scoredTrails.forEach(t => { t.properties._on = 0; });
+    curObs.features.forEach(obs => {
+      const pt = turf.point(obs.geometry.coordinates);
+      scoredTrails.forEach(t => {
+        try {
+          const nearest = turf.nearestPointOnLine(t, pt);
+          if (nearest.properties.dist <= 0.5) { // 500m buffer
+            t.properties._on++;
+          }
+        } catch(e) {}
+      });
+    });
+  }
+
+  const maxObs = Math.max(1, ...scoredTrails.map(t => t.properties._on || 0));
+
+  lTr = L.geoJSON(trailData, {
+    style: f => {
+      const on = f.properties._on || 0;
+      const s = on / maxObs;
+      if (curObs && on > 0) {
+        return { color: '#daa520', weight: 2 + s * 4, opacity: .4 + s * .6 };
       }
-      return{color:'#343868',weight:1.5,opacity:.3};
+      return { color: '#e0c870', weight: 2, opacity: .5 };
     },
-    onEachFeature:(f,ly)=>{ly.on('click',()=>{const p=f.properties;const s=p._sn||0;const st=s>.75?'★★★':s>.5?'★★':s>.25?'★':'—';const mi=p.miles?((+p.miles).toFixed(1)+' mi'):'';const co=p.community||'';const ob=p._on!=null?'<br/>Nearby obs: <b style="color:#daa520">'+p._on+'</b><br/>Likelihood: '+st:'';ly.bindPopup('<strong>'+(p.trailname||'Trail')+'</strong><br/><span style="color:#585e80;font-size:.72rem">'+co+(co&&mi?' · ':'')+mi+'</span>'+ob).openPopup()})}
+    onEachFeature: (f, ly) => {
+      ly.on('click', () => {
+        const p = f.properties;
+        const mi = p.miles ? ((+p.miles).toFixed(1) + ' mi') : '';
+        const co = p.community || '';
+        const ob = p._on ? '<br/>Nearby observations: <b style="color:#daa520">' + p._on + '</b>' : '';
+        const url = p.mapurl ? '<br/><a href="' + p.mapurl + '" target="_blank" style="font-size:.72rem">Trail info →</a>' : '';
+        ly.bindPopup(
+          '<strong>' + (p.trailname || 'Trail') + '</strong>' +
+          '<br/><span style="color:#585e80;font-size:.72rem">' + co + (co && mi ? ' · ' : '') + mi + '</span>' +
+          ob + url
+        ).openPopup();
+      });
+    }
   });
-  if($('tTr').checked)lTr.addTo(map);
+
+  if ($('tTr').checked) lTr.addTo(map);
+
+  // Update trail info in sidebar
+  const sorted = [...scoredTrails].sort((a, b) => (b.properties._on || 0) - (a.properties._on || 0));
+  const topTrails = sorted.filter(t => (t.properties._on || 0) > 0).slice(0, 8);
+
+  $('trailTitle').textContent = 'Trails in ' + wsName;
+  $('trailCount').textContent = trailData.features.length + ' trails loaded';
+
+  if (topTrails.length && curObs) {
+    $('trailList').innerHTML = topTrails.map(t =>
+      '<div class="trail-item"><span class="tn">' + (t.properties.trailname || 'Trail') + '</span><span class="to">' + t.properties._on + ' obs</span></div>'
+    ).join('');
+  } else if (!curObs) {
+    $('trailList').innerHTML = '<div style="font-size:.72rem;color:var(--text3);font-style:italic">Search a species to see trail rankings</div>';
+  } else {
+    $('trailList').innerHTML = '<div style="font-size:.72rem;color:var(--text3);font-style:italic">No observations near these trails</div>';
+  }
+  $('trailInfo').classList.add('vis');
+  $('sT').textContent = trailData.features.length;
 }
-bTr('default');hL();
 
-/* Search */
-let sTimer,curSp=null,curObs=null,lObs=null,lHeat=null;
-const inp=$('inp'),sugBox=$('sugs');
-inp.addEventListener('input',()=>{clearTimeout(sTimer);const q=inp.value.trim();if(q.length<2){sugBox.classList.remove('open');return}
-sTimer=setTimeout(async()=>{let taxa=[];try{const d=await(await fetch(INAT+'/taxa/autocomplete?q='+encodeURIComponent(q)+'&per_page=12&is_active=true')).json();taxa=(d.results||[]).map(t=>({id:t.id,sci:t.name,common:t.preferred_common_name||t.english_common_name||t.name,rank:t.rank,icon:t.default_photo?.square_url||''}))}catch(e){}
-if(!taxa.length){sugBox.innerHTML='<div style="padding:14px 16px;color:var(--text3);font-size:.82rem;font-family:var(--fd);font-style:italic">No species found</div>';sugBox.classList.add('open');return}
-sugBox.innerHTML=taxa.map(t=>'<div class="sg" data-id="'+t.id+'" data-sci="'+t.sci+'" data-common="'+t.common+'" data-icon="'+t.icon+'">'+(t.icon?'<img class="sg-img" src="'+t.icon+'" alt=""/>':'<div class="sg-img"></div>')+'<div class="sg-info"><div class="sg-c">'+t.common+'</div><div class="sg-s">'+t.sci+'</div></div><span class="sg-r">'+t.rank+'</span></div>').join('');
-sugBox.classList.add('open');sugBox.querySelectorAll('.sg').forEach(el=>{el.addEventListener('click',()=>pick({id:el.dataset.id,sci:el.dataset.sci,common:el.dataset.common,icon:el.dataset.icon}))})},280)});
-inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const f=sugBox.querySelector('.sg');if(f)f.click()}});
-document.addEventListener('click',e=>{if(!e.target.closest('.sw'))sugBox.classList.remove('open')});
+hL();
 
-async function pick(sp){
-  curSp=sp;sugBox.classList.remove('open');inp.value='';
-  $('bC').textContent=sp.common;$('bS').textContent=sp.sci;$('bImg').src=sp.icon||'';$('bImg').style.display=sp.icon?'':'none';$('badge').classList.add('vis');
-  sL('Fetching '+sp.common+' observations…');
-  try{
-    let all=[];
-    if($('tINat').checked){for(let pg=1;pg<=5;pg++){const d=await(await fetch(INAT+'/observations?taxon_id='+sp.id+'&swlat='+NH.swlat+'&swlng='+NH.swlng+'&nelat='+NH.nelat+'&nelng='+NH.nelng+'&quality_grade=research,needs_id&per_page=200&page='+pg+'&order=desc&order_by=observed_on')).json();const r=d.results||[];all=all.concat(r);if(r.length<200)break}}
-    let eb=[];
-    if($('tEB').checked&&EBIRD_KEY){try{const tx=await(await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&cat=species',{headers:{'X-eBirdApiToken':EBIRD_KEY}})).json();const m=tx.find(t=>t.sciName.toLowerCase()===sp.sci.toLowerCase());if(m){eb=await(await fetch('https://api.ebird.org/v2/data/obs/US-NH/recent/'+m.speciesCode+'?back=30',{headers:{'X-eBirdApiToken':EBIRD_KEY}})).json()||[]}}catch(e){}}
-    const feats=[];
-    all.filter(o=>o.geojson).forEach(o=>{feats.push({type:'Feature',geometry:{type:'Point',coordinates:[+o.geojson.coordinates[0],+o.geojson.coordinates[1]]},properties:{id:o.id,src:'iNaturalist',species:o.taxon?.name||'',common:o.taxon?.preferred_common_name||'',date:o.observed_on||'',user:o.user?.login||'',photo:o.photos?.[0]?.url?.replace('square','small')||'',uri:o.uri||'https://www.inaturalist.org/observations/'+o.id}})});
-    eb.forEach(o=>{feats.push({type:'Feature',geometry:{type:'Point',coordinates:[o.lng,o.lat]},properties:{id:o.subId,src:'eBird',species:o.sciName||'',common:o.comName||'',date:o.obsDt||'',loc:o.locName||'',uri:'https://ebird.org/checklist/'+o.subId}})});
-    curObs={type:'FeatureCollection',features:feats};analyze();
-  }catch(e){console.error(e);hL()}
-}
-$('bX').addEventListener('click',clr);
-function clr(){curSp=null;curObs=null;$('badge').classList.remove('vis');if(lObs){map.removeLayer(lObs);lObs=null}if(lHeat){map.removeLayer(lHeat);lHeat=null}bWS('default');bTr('default');$('sO').textContent='—';$('sW').textContent='—';$('sT').textContent='—';$('resP').classList.remove('vis')}
+/* ── Species Search ── */
+let sTimer;
+const inp = $('inp'), sugBox = $('sugs');
 
-function analyze(){
-  if(!curObs||!curObs.features.length){hL();$('bS').textContent=curSp.sci+' — no observations found in NH';return}
-  sL('Analyzing '+curObs.features.length+' observations…');
-  setTimeout(()=>{
-    const pts=curObs.features;
-    wsGJ.features.forEach(f=>{f.properties._oc=0;f.properties._od=0;f.properties._top=false});
-    pts.forEach(pt=>{const tp=turf.point(pt.geometry.coordinates);for(const f of wsGJ.features){try{if(turf.booleanPointInPolygon(tp,f)){f.properties._oc++;break}}catch(e){}}});
-    wsGJ.features.forEach(f=>{const a=f.properties.areasqkm||1;f.properties._od=+(f.properties._oc/a).toFixed(2)});
-    let topWS=null,topN=0;wsGJ.features.forEach(f=>{if(f.properties._oc>topN){topN=f.properties._oc;topWS=f}});
-    if(topWS)topWS.properties._top=true;
+inp.addEventListener('input', () => {
+  clearTimeout(sTimer);
+  const q = inp.value.trim();
+  if (q.length < 2) { sugBox.classList.remove('open'); return; }
 
-    const bk=0.1;tGJ.features.forEach(f=>{f.properties._on=0;f.properties._sn=0;f.properties._tt=false});
-    pts.forEach(pt=>{const tp=turf.point(pt.geometry.coordinates);tGJ.features.forEach(t=>{try{if(turf.nearestPointOnLine(t,tp).properties.dist<=bk)t.properties._on++}catch(e){}})});
-    const mx=Math.max(1,...tGJ.features.map(t=>t.properties._on));
-    tGJ.features.forEach(t=>{t.properties._sn=+(t.properties._on/mx).toFixed(3)});
-    const sT=[...tGJ.features].filter(f=>f.properties._on>0).sort((a,b)=>b.properties._on-a.properties._on);
-    sT.slice(0,3).forEach(f=>{f.properties._tt=true});
+  sTimer = setTimeout(async () => {
+    let taxa = [];
+    try {
+      const d = await (await fetch(INAT + '/taxa/autocomplete?q=' + encodeURIComponent(q) + '&per_page=12&is_active=true')).json();
+      taxa = (d.results || []).map(t => ({
+        id: t.id, sci: t.name,
+        common: t.preferred_common_name || t.english_common_name || t.name,
+        rank: t.rank,
+        icon: t.default_photo?.square_url || ''
+      }));
+    } catch(e) { console.error('Search error:', e); }
 
-    bWS('density');bTr('scored');
+    if (!taxa.length) {
+      sugBox.innerHTML = '<div style="padding:14px 16px;color:var(--text3);font-size:.82rem;font-family:var(--fd);font-style:italic">No species found</div>';
+      sugBox.classList.add('open');
+      return;
+    }
 
-    if(lObs)map.removeLayer(lObs);
-    lObs=L.geoJSON(curObs,{pointToLayer:(f,ll)=>L.circleMarker(ll,{radius:5,fillColor:f.properties.src==='iNaturalist'?'#85bb40':'#5ca0e0',color:'#090a12',weight:1,fillOpacity:.85}),
-    onEachFeature:(f,ly)=>{const p=f.properties;const ph=p.photo?'<img src="'+p.photo+'" style="width:100%;max-height:100px;object-fit:cover;border-radius:6px;margin-bottom:6px"/>':'';ly.bindPopup(ph+'<strong>'+(p.common||p.species)+'</strong><br/><em style="color:#949cc0;font-size:.72rem">'+p.species+'</em><br/><span style="color:#585e80;font-size:.72rem">'+p.src+' · '+(p.date||'')+(p.user?' · '+p.user:'')+(p.loc?'<br/>'+p.loc:'')+'</span><br/><a href="'+p.uri+'" target="_blank" style="font-size:.75rem">View observation →</a>')}});
-    if($('tPt').checked)lObs.addTo(map);
+    sugBox.innerHTML = taxa.map(t =>
+      '<div class="sg" data-id="' + t.id + '" data-sci="' + t.sci + '" data-common="' + t.common + '" data-icon="' + t.icon + '">' +
+      (t.icon ? '<img class="sg-img" src="' + t.icon + '" alt=""/>' : '<div class="sg-img"></div>') +
+      '<div class="sg-info"><div class="sg-c">' + t.common + '</div><div class="sg-s">' + t.sci + '</div></div>' +
+      '<span class="sg-r">' + t.rank + '</span></div>'
+    ).join('');
+    sugBox.classList.add('open');
+    sugBox.querySelectorAll('.sg').forEach(el => {
+      el.addEventListener('click', () => pick({
+        id: el.dataset.id, sci: el.dataset.sci,
+        common: el.dataset.common, icon: el.dataset.icon
+      }));
+    });
+  }, 300);
+});
 
-    if(lHeat)map.removeLayer(lHeat);
-    lHeat=L.heatLayer(curObs.features.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0],0.6]),{radius:22,blur:16,maxZoom:14,gradient:{0.15:'#151726',0.35:'#384898',0.55:'#7848a8',0.75:'#b83868',1:'#d04030'}});
-    if($('tHt').checked)lHeat.addTo(map);
+inp.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); const f = sugBox.querySelector('.sg'); if (f) f.click(); }
+});
+document.addEventListener('click', e => { if (!e.target.closest('.sw')) sugBox.classList.remove('open'); });
 
-    // Results
-    const topW=[...wsGJ.features].filter(f=>f.properties._oc>0).sort((a,b)=>b.properties._oc-a.properties._oc).slice(0,5);
-    const topTr=sT.slice(0,5);const mW=topW[0]?.properties._oc||1;const mT=topTr[0]?.properties._on||1;
-    let h='<div class="rs"><h4>Highest Density Watershed</h4>';
-    if(topWS&&topN>0){h+='<div class="hero-card"><div class="hero-name">'+topWS.properties.name+'</div><div class="hero-sub">'+topN+' observations · '+topWS.properties._od+'/km²</div></div>'}
-    h+='<h4 style="margin-top:14px">Top Watersheds</h4>';
-    topW.forEach(f=>{const pct=(f.properties._oc/mW*100).toFixed(0);h+='<div class="rr"><span class="rn">'+(f.properties._top?'⬥ ':'')+f.properties.name+'</span><span class="rv">'+f.properties._oc+'</span></div><div class="rb"><div class="rb-f" style="width:'+pct+'%;background:'+(f.properties._top?'var(--crimson)':'var(--mist)')+'"></div></div>'});
-    h+='</div><div class="rs"><h4>Best Trails for Sightings</h4>';
-    if(topTr.length){topTr.forEach((f,i)=>{const pct=(f.properties._on/mT*100).toFixed(0);const co=f.properties.community||'';const mi=f.properties.miles?((+f.properties.miles).toFixed(1)+' mi'):'';h+='<div class="rr"><span class="rn">'+(i<3?'⭐ ':'')+f.properties.trailname+'</span><span class="rv t">'+f.properties._on+'</span></div><div style="font-size:.68rem;color:var(--text3);margin:-2px 0 2px">'+(f.properties._ws||'')+( co?' · '+co:'')+(mi?' · '+mi:'')+'</div><div class="rb"><div class="rb-f" style="width:'+pct+'%;background:var(--gold)"></div></div>'})}else{h+='<div class="nr">No observations near trails</div>'}
-    h+='</div>';
-    $('resC').innerHTML=h;$('resP').classList.add('vis');
-    $('sO').textContent=curObs.features.length.toLocaleString();$('sW').textContent=topW.length;$('sT').textContent=topTr.length;
+/* ── Pick species & fetch observations ── */
+async function pick(sp) {
+  curSp = sp;
+  sugBox.classList.remove('open');
+  inp.value = '';
+  $('bC').textContent = sp.common;
+  $('bS').textContent = sp.sci;
+  $('bImg').src = sp.icon || '';
+  $('bImg').style.display = sp.icon ? '' : 'none';
+  $('badge').classList.add('vis');
+  sL('Fetching ' + sp.common + ' observations…');
+
+  try {
+    let all = [];
+    // iNaturalist
+    if ($('tINat').checked) {
+      for (let pg = 1; pg <= 5; pg++) {
+        const url = INAT + '/observations?taxon_id=' + sp.id +
+          '&swlat=' + NH.swlat + '&swlng=' + NH.swlng +
+          '&nelat=' + NH.nelat + '&nelng=' + NH.nelng +
+          '&quality_grade=research,needs_id&per_page=200&page=' + pg +
+          '&order=desc&order_by=observed_on';
+        const d = await (await fetch(url)).json();
+        const r = d.results || [];
+        all = all.concat(r);
+        if (r.length < 200) break;
+      }
+    }
+
+    // eBird
+    let eb = [];
+    if ($('tEB').checked && EBIRD_KEY) {
+      try {
+        const tx = await (await fetch('https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&cat=species', {
+          headers: { 'X-eBirdApiToken': EBIRD_KEY }
+        })).json();
+        const m = tx.find(t => t.sciName.toLowerCase() === sp.sci.toLowerCase());
+        if (m) {
+          eb = await (await fetch('https://api.ebird.org/v2/data/obs/US-NH/recent/' + m.speciesCode + '?back=30', {
+            headers: { 'X-eBirdApiToken': EBIRD_KEY }
+          })).json() || [];
+        }
+      } catch(e) { console.warn('eBird error:', e); }
+    }
+
+    // Build feature collection
+    const feats = [];
+    all.filter(o => o.geojson).forEach(o => {
+      feats.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [+o.geojson.coordinates[0], +o.geojson.coordinates[1]] },
+        properties: {
+          id: o.id, src: 'iNaturalist',
+          species: o.taxon?.name || '', common: o.taxon?.preferred_common_name || '',
+          date: o.observed_on || '', user: o.user?.login || '',
+          photo: o.photos?.[0]?.url?.replace('square', 'small') || '',
+          uri: o.uri || 'https://www.inaturalist.org/observations/' + o.id
+        }
+      });
+    });
+    eb.forEach(o => {
+      feats.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [o.lng, o.lat] },
+        properties: {
+          id: o.subId, src: 'eBird',
+          species: o.sciName || '', common: o.comName || '',
+          date: o.obsDt || '', loc: o.locName || '',
+          uri: 'https://ebird.org/checklist/' + o.subId
+        }
+      });
+    });
+
+    curObs = { type: 'FeatureCollection', features: feats };
+    analyze();
+  } catch(e) {
+    console.error('Fetch error:', e);
     hL();
-  },60);
+  }
 }
 
-// Legend
-const leg=L.control({position:'bottomright'});
-leg.onAdd=function(){const d=L.DomUtil.create('div','legend');d.innerHTML='<div class="legend-t">Density (after search)</div><div class="legend-r"><span class="legend-s" style="background:#28385a"></span>Low</div><div class="legend-r"><span class="legend-s" style="background:#7848a8"></span>Medium</div><div class="legend-r"><span class="legend-s" style="background:#b83868"></span>High</div><div class="legend-r"><span class="legend-s" style="background:#d04030"></span>Very High</div><div class="legend-t" style="margin-top:8px">Trails</div><div class="legend-r"><span class="legend-s" style="background:#343868"></span>No data</div><div class="legend-r"><span class="legend-s" style="background:#daa520"></span>Top trails</div>';return d};
+$('bX').addEventListener('click', clr);
+function clr() {
+  curSp = null; curObs = null;
+  $('badge').classList.remove('vis');
+  if (lObs) { map.removeLayer(lObs); lObs = null; }
+  if (lHeat) { map.removeLayer(lHeat); lHeat = null; }
+  if (lTr) { map.removeLayer(lTr); lTr = null; }
+  activeWatershed = null;
+  bWS('default');
+  $('sO').textContent = '—'; $('sW').textContent = '—'; $('sT').textContent = '—';
+  $('resP').classList.remove('vis');
+  $('wsHint').classList.remove('vis');
+  $('trailInfo').classList.remove('vis');
+}
+
+/* ── Analyze observations ── */
+function analyze() {
+  if (!curObs || !curObs.features.length) {
+    hL();
+    $('bS').textContent = curSp.sci + ' — no observations found in NH';
+    return;
+  }
+  sL('Analyzing ' + curObs.features.length + ' observations…');
+
+  setTimeout(() => {
+    const pts = curObs.features;
+
+    // Count observations per watershed
+    wsGJ.features.forEach(f => { f.properties._oc = 0; f.properties._od = 0; f.properties._top = false; });
+    pts.forEach(pt => {
+      const tp = turf.point(pt.geometry.coordinates);
+      for (const f of wsGJ.features) {
+        try {
+          if (turf.booleanPointInPolygon(tp, f)) { f.properties._oc++; break; }
+        } catch(e) {}
+      }
+    });
+
+    // Density
+    wsGJ.features.forEach(f => {
+      const a = f.properties.areasqkm || 1;
+      f.properties._od = +(f.properties._oc / a).toFixed(2);
+    });
+
+    // Find top watershed
+    let topWS = null, topN = 0;
+    wsGJ.features.forEach(f => { if (f.properties._oc > topN) { topN = f.properties._oc; topWS = f; } });
+    if (topWS) topWS.properties._top = true;
+
+    // Update watershed styles
+    bWS('density');
+
+    // Observation points layer
+    if (lObs) map.removeLayer(lObs);
+    lObs = L.geoJSON(curObs, {
+      pointToLayer: (f, ll) => L.circleMarker(ll, {
+        radius: 5,
+        fillColor: f.properties.src === 'iNaturalist' ? '#85bb40' : '#5ca0e0',
+        color: '#090a12', weight: 1, fillOpacity: .85
+      }),
+      onEachFeature: (f, ly) => {
+        const p = f.properties;
+        const ph = p.photo ? '<img src="' + p.photo + '" style="width:100%;max-height:100px;object-fit:cover;border-radius:6px;margin-bottom:6px"/>' : '';
+        ly.bindPopup(
+          ph + '<strong>' + (p.common || p.species) + '</strong>' +
+          '<br/><em style="color:#949cc0;font-size:.72rem">' + p.species + '</em>' +
+          '<br/><span style="color:#585e80;font-size:.72rem">' + p.src + ' · ' + (p.date || '') +
+          (p.user ? ' · ' + p.user : '') + (p.loc ? '<br/>' + p.loc : '') + '</span>' +
+          '<br/><a href="' + p.uri + '" target="_blank" style="font-size:.75rem">View observation →</a>'
+        );
+      }
+    });
+    if ($('tPt').checked) lObs.addTo(map);
+
+    // Heatmap
+    if (lHeat) map.removeLayer(lHeat);
+    lHeat = L.heatLayer(
+      curObs.features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0], 0.6]),
+      { radius: 22, blur: 16, maxZoom: 14, gradient: { 0.15: '#151726', 0.35: '#384898', 0.55: '#7848a8', 0.75: '#b83868', 1: '#d04030' } }
+    );
+    if ($('tHt').checked) lHeat.addTo(map);
+
+    // Build results panel
+    const topW = [...wsGJ.features].filter(f => f.properties._oc > 0).sort((a, b) => b.properties._oc - a.properties._oc).slice(0, 5);
+    const mW = topW[0]?.properties._oc || 1;
+
+    let h = '<div class="rs"><h4>Highest Density Watershed</h4>';
+    if (topWS && topN > 0) {
+      h += '<div class="hero-card" onclick="document.dispatchEvent(new CustomEvent(\'wsClick\',{detail:\'' + topWS.properties.name + '\'}))">' +
+           '<div class="hero-name">' + topWS.properties.name + '</div>' +
+           '<div class="hero-sub">' + topN + ' observations · ' + topWS.properties._od + '/km²</div>' +
+           '<div class="hero-hint">Click to view trails →</div></div>';
+    }
+    h += '<h4 style="margin-top:14px">Top Watersheds</h4>';
+    topW.forEach(f => {
+      const pct = (f.properties._oc / mW * 100).toFixed(0);
+      const clickAttr = ' style="cursor:pointer" onclick="document.dispatchEvent(new CustomEvent(\'wsClick\',{detail:\'' + f.properties.name + '\'}))"';
+      h += '<div class="rr"' + clickAttr + '><span class="rn">' + (f.properties._top ? '⬥ ' : '') + f.properties.name + '</span><span class="rv">' + f.properties._oc + '</span></div>' +
+           '<div class="rb"><div class="rb-f" style="width:' + pct + '%;background:' + (f.properties._top ? 'var(--crimson)' : 'var(--mist)') + '"></div></div>';
+    });
+    h += '</div>';
+
+    $('resC').innerHTML = h;
+    $('resP').classList.add('vis');
+    $('wsHint').classList.add('vis');
+    $('sO').textContent = curObs.features.length.toLocaleString();
+    $('sW').textContent = topW.length;
+    $('sT').textContent = '—';
+
+    // If a watershed was already active, re-score its trails
+    if (activeWatershed) {
+      showTrailsForWatershed(activeWatershed);
+    }
+
+    hL();
+  }, 60);
+}
+
+// Handle watershed clicks from sidebar results
+document.addEventListener('wsClick', async (e) => {
+  const wsName = e.detail;
+  // Zoom to watershed
+  const feat = wsGJ.features.find(f => f.properties.name === wsName);
+  if (feat) {
+    const bounds = L.geoJSON(feat).getBounds();
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }
+  await showTrailsForWatershed(wsName);
+});
+
+/* ── Legend ── */
+const leg = L.control({ position: 'bottomright' });
+leg.onAdd = function() {
+  const d = L.DomUtil.create('div', 'legend');
+  d.innerHTML =
+    '<div class="legend-t">Observation Density</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#28385a"></span>Low</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#7848a8"></span>Medium</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#b83868"></span>High</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#d04030"></span>Very High</div>' +
+    '<div class="legend-t" style="margin-top:8px">Trails</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#e0c870"></span>Trail</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#daa520"></span>Near observations</div>' +
+    '<div class="legend-t" style="margin-top:8px">Points</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#85bb40;border-radius:50%"></span>iNaturalist</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#5ca0e0;border-radius:50%"></span>eBird</div>';
+  return d;
+};
 leg.addTo(map);
 
-// Toggles
-$('tWS').addEventListener('change',()=>{if(!lWS)return;$('tWS').checked?lWS.addTo(map):map.removeLayer(lWS)});
-$('tTr').addEventListener('change',()=>{if(!lTr)return;$('tTr').checked?lTr.addTo(map):map.removeLayer(lTr)});
-$('tPt').addEventListener('change',()=>{if(!lObs)return;$('tPt').checked?lObs.addTo(map):map.removeLayer(lObs)});
-$('tHt').addEventListener('change',()=>{if(!lHeat)return;$('tHt').checked?lHeat.addTo(map):map.removeLayer(lHeat)});
-$('tINat').addEventListener('change',()=>{if(curSp)pick(curSp)});
-$('tEB').addEventListener('change',()=>{if(curSp)pick(curSp)});
+/* ── Layer Toggles ── */
+$('tWS').addEventListener('change', () => { if (!lWS) return; $('tWS').checked ? lWS.addTo(map) : map.removeLayer(lWS); });
+$('tTr').addEventListener('change', () => { if (!lTr) return; $('tTr').checked ? lTr.addTo(map) : map.removeLayer(lTr); });
+$('tPt').addEventListener('change', () => { if (!lObs) return; $('tPt').checked ? lObs.addTo(map) : map.removeLayer(lObs); });
+$('tHt').addEventListener('change', () => { if (!lHeat) return; $('tHt').checked ? lHeat.addTo(map) : map.removeLayer(lHeat); });
+$('tINat').addEventListener('change', () => { if (curSp) pick(curSp); });
+$('tEB').addEventListener('change', () => { if (curSp) pick(curSp); });
 
 console.log('🌿 NH Biodiversity Explorer ready');
 })();
