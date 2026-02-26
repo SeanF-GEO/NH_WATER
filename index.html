@@ -8,6 +8,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -143,7 +145,27 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
 .ws-tip{background:var(--shade)!important;color:var(--frost)!important;border:1px solid var(--neon-dim)!important;border-radius:6px!important;padding:8px 16px!important;font-family:var(--fb)!important;font-size:1.15rem!important;font-weight:600!important;box-shadow:0 0 20px rgba(0,232,180,.1)!important}
 .trail-tip{background:rgba(139,92,246,.92)!important;color:#fff!important;border:none!important;border-radius:4px!important;padding:5px 12px!important;font-family:var(--fb)!important;font-size:1.05rem!important;font-weight:600!important;box-shadow:0 4px 12px rgba(139,92,246,.3)!important;white-space:nowrap!important}
 
-@media(max-width:900px){:root{--sb:100vw}.sidebar{width:100%;height:auto;max-height:42vh;position:relative}#map{position:relative;left:0;height:58vh}body{overflow-y:auto}.ld{left:0}}
+/* ═══ 3D MODE ═══ */
+.mode-toggle{display:flex;gap:0;margin-bottom:16px;border-radius:var(--rad);overflow:hidden;border:1px solid var(--bdr2)}
+.mode-btn{flex:1;padding:12px 0;text-align:center;font-family:var(--fb);font-size:1.15rem;font-weight:600;letter-spacing:.06em;cursor:pointer;border:none;transition:all .25s;background:var(--shade);color:var(--ash)}
+.mode-btn:hover{color:var(--silver);background:var(--murk)}
+.mode-btn.active{background:linear-gradient(135deg,rgba(0,232,180,.12),rgba(139,92,246,.08));color:var(--neon);box-shadow:inset 0 -2px 0 var(--neon)}
+#map3d{position:fixed;top:0;left:var(--sb);right:0;bottom:0;z-index:1;background:var(--void);display:none}
+#map3d.active{display:block}
+#map.hidden{display:none}
+.maplibregl-popup-content{background:var(--shade)!important;color:var(--text1)!important;border-radius:var(--rad)!important;border:1px solid var(--bdr2)!important;box-shadow:0 16px 50px rgba(0,0,0,.6)!important;font-family:var(--fb)!important;font-size:1.1rem!important;padding:16px 20px!important}
+.maplibregl-popup-content strong{color:var(--neon);font-family:var(--fd);font-size:1.2rem}
+.maplibregl-popup-tip{border-top-color:var(--shade)!important}
+.maplibregl-popup-close-button{color:var(--ash)!important;font-size:20px!important;padding:4px 8px!important}
+.maplibregl-ctrl-group{background:var(--shade)!important;border:1px solid var(--bdr2)!important}
+.maplibregl-ctrl-group button{color:var(--frost)!important}
+.maplibregl-ctrl-group button+button{border-top:1px solid var(--bdr2)!important}
+.maplibregl-ctrl-attrib{background:rgba(5,6,13,.92)!important;color:var(--ash)!important;font-size:.7rem!important}
+.maplibregl-ctrl-attrib a{color:var(--silver)!important}
+.terrain-label{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;background:var(--shade);border:1px solid var(--neon-dim);border-radius:var(--rad);padding:10px 20px;font-family:var(--fb);font-size:1.05rem;color:var(--silver);pointer-events:none;box-shadow:0 0 20px rgba(0,232,180,.1);display:none}
+#map3d.active .terrain-label{display:block}
+
+@media(max-width:900px){:root{--sb:100vw}.sidebar{width:100%;height:auto;max-height:42vh;position:relative}#map,#map3d{position:relative;left:0;height:58vh}body{overflow-y:auto}.ld{left:0}}
 </style>
 </head>
 <body>
@@ -165,7 +187,11 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
   </div>
   <div class="pnl">
     <label class="pnl-lb"><span class="sn">2</span>Layers</label>
-    <div class="tg">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn2d">2D Map</button>
+      <button class="mode-btn" id="btn3d">3D Terrain</button>
+    </div>
+    <div class="tg" id="layerToggles2d">
       <label class="tl"><input type="checkbox" id="tWS" checked/><span class="tt"></span><span class="tl-lb">Watersheds</span></label>
       <label class="tl"><input type="checkbox" id="tPt" checked/><span class="tt"></span><span class="tl-lb">Observation Points</span></label>
     </div>
@@ -188,6 +214,9 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
   </div>
 </aside>
 <div id="map"></div>
+<div id="map3d">
+  <div class="terrain-label" id="terrainLabel">Scroll to zoom &middot; Right-drag to rotate &middot; Click a watershed to explore</div>
+</div>
 <div id="ld" class="ld"><div><div class="sp"></div><p class="lm" id="lmsg">Loading…</p></div></div>
 
 <script>
@@ -610,6 +639,288 @@ $('tPt').addEventListener('change',()=>{
 });
 
 console.log('🌿 NH Biodiversity Explorer ready');
+
+/* ═══════════════════════════════════════════════════════════
+   3D TERRAIN VIEWER MODULE
+   Uses MapLibre GL JS + free AWS/Mapzen terrain tiles
+   No API key required — fully static
+   ═══════════════════════════════════════════════════════════ */
+
+let map3d = null;
+let mode3d = false;
+let highlighted3dWs = null;
+
+const WS_BORDER_COLORS_3D = {};
+wsGJ.features.forEach((f,i) => { WS_BORDER_COLORS_3D[f.properties.name] = WC[i % WC.length]; });
+
+function init3dMap() {
+  if (map3d) return; // already initialized
+
+  map3d = new maplibregl.Map({
+    container: 'map3d',
+    style: {
+      version: 8,
+      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+      sources: {
+        'carto-dark': {
+          type: 'raster',
+          tiles: [
+            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
+          ],
+          tileSize: 256,
+          attribution: '&copy; CARTO &copy; OSM'
+        },
+        'terrainSource': {
+          type: 'raster-dem',
+          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+          encoding: 'terrarium',
+          tileSize: 256,
+          maxzoom: 15
+        },
+        'hillshadeSource': {
+          type: 'raster-dem',
+          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+          encoding: 'terrarium',
+          tileSize: 256,
+          maxzoom: 15
+        }
+      },
+      layers: [
+        {
+          id: 'carto-tiles',
+          type: 'raster',
+          source: 'carto-dark',
+          minzoom: 0,
+          maxzoom: 19
+        },
+        {
+          id: 'hillshade',
+          type: 'hillshade',
+          source: 'hillshadeSource',
+          paint: {
+            'hillshade-exaggeration': 0.35,
+            'hillshade-shadow-color': '#000000',
+            'hillshade-highlight-color': '#ffffff',
+            'hillshade-accent-color': '#0a0d1a',
+            'hillshade-illumination-direction': 315
+          }
+        }
+      ],
+      terrain: {
+        source: 'terrainSource',
+        exaggeration: 2.8
+      },
+      sky: {
+        'sky-color': '#05060d',
+        'horizon-color': '#151a32',
+        'fog-color': '#0a0d1a',
+        'sky-horizon-blend': 0.5,
+        'horizon-fog-blend': 0.8
+      }
+    },
+    center: [-72.1, 43.8],
+    zoom: 7.8,
+    pitch: 55,
+    bearing: -15,
+    maxPitch: 80,
+    minZoom: 6,
+    maxZoom: 16
+  });
+
+  map3d.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
+
+  map3d.on('load', () => {
+    // Add HUC8 watershed source
+    map3d.addSource('watersheds', {
+      type: 'geojson',
+      data: wsGJ
+    });
+
+    // Fill layer — semi-transparent
+    map3d.addLayer({
+      id: 'ws-fill',
+      type: 'fill',
+      source: 'watersheds',
+      paint: {
+        'fill-color': 'rgba(0,232,180,0.04)',
+        'fill-opacity': 0.6
+      }
+    });
+
+    // Highlighted fill — initially hidden via filter
+    map3d.addLayer({
+      id: 'ws-fill-highlight',
+      type: 'fill',
+      source: 'watersheds',
+      paint: {
+        'fill-color': 'rgba(0,232,180,0.12)',
+        'fill-opacity': 0.8
+      },
+      filter: ['==', 'name', '']
+    });
+
+    // Border lines
+    map3d.addLayer({
+      id: 'ws-lines',
+      type: 'line',
+      source: 'watersheds',
+      paint: {
+        'line-color': ['match', ['get', 'name'],
+          ...wsGJ.features.flatMap(f => [f.properties.name, WS_BORDER_COLORS_3D[f.properties.name] || '#00e8b4']),
+          '#00e8b4'
+        ],
+        'line-width': 2.5,
+        'line-opacity': 0.85
+      }
+    });
+
+    // Highlight border
+    map3d.addLayer({
+      id: 'ws-lines-highlight',
+      type: 'line',
+      source: 'watersheds',
+      paint: {
+        'line-color': '#00ffc8',
+        'line-width': 5,
+        'line-opacity': 1
+      },
+      filter: ['==', 'name', '']
+    });
+
+    // Watershed name labels
+    map3d.addLayer({
+      id: 'ws-labels',
+      type: 'symbol',
+      source: 'watersheds',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': 13,
+        'text-font': ['Open Sans Regular'],
+        'text-anchor': 'center',
+        'text-max-width': 10,
+        'text-allow-overlap': false
+      },
+      paint: {
+        'text-color': '#c8cdea',
+        'text-halo-color': 'rgba(5,6,13,0.9)',
+        'text-halo-width': 2
+      }
+    });
+
+    // Cursor and click handling
+    map3d.on('mouseenter', 'ws-fill', () => { map3d.getCanvas().style.cursor = 'pointer'; });
+    map3d.on('mouseleave', 'ws-fill', () => { map3d.getCanvas().style.cursor = ''; });
+
+    map3d.on('click', 'ws-fill', (e) => {
+      if (!e.features.length) return;
+      const feat = e.features[0];
+      const name = feat.properties.name;
+      zoom3dToWatershed(name);
+    });
+
+    // Click off watersheds to reset
+    map3d.on('click', (e) => {
+      const features = map3d.queryRenderedFeatures(e.point, { layers: ['ws-fill'] });
+      if (!features.length && highlighted3dWs) {
+        reset3dView();
+      }
+    });
+
+    console.log('🏔️ 3D Terrain viewer loaded');
+    // Fade out the hint label after a few seconds
+    setTimeout(() => {
+      const lbl = $('terrainLabel');
+      if (lbl) { lbl.style.transition = 'opacity 1.5s'; lbl.style.opacity = '0'; setTimeout(() => lbl.style.display = 'none', 1500); }
+    }, 5000);
+  });
+}
+
+function zoom3dToWatershed(name) {
+  if (!map3d) return;
+  highlighted3dWs = name;
+
+  // Set highlight filters
+  map3d.setFilter('ws-fill-highlight', ['==', 'name', name]);
+  map3d.setFilter('ws-lines-highlight', ['==', 'name', name]);
+
+  // Calculate bounds of the clicked watershed
+  const feat = wsGJ.features.find(f => f.properties.name === name);
+  if (!feat) return;
+
+  const bounds = turf.bbox(feat);
+  // [minX, minY, maxX, maxY] = [west, south, east, north]
+
+  map3d.flyTo({
+    center: [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2],
+    zoom: 10,
+    pitch: 62,
+    bearing: map3d.getBearing(),
+    duration: 2000,
+    essential: true
+  });
+
+  // Popup with obs count
+  const oc = feat.properties._oc || 0;
+  const center = turf.centerOfMass(feat);
+  const lngLat = center.geometry.coordinates;
+
+  new maplibregl.Popup({ offset: 10, closeButton: true, maxWidth: '320px' })
+    .setLngLat(lngLat)
+    .setHTML(
+      '<strong>' + name + '</strong>' +
+      (feat.properties.huc8 ? '<br/><span style="color:#4a5280">HUC8: ' + feat.properties.huc8 + '</span>' : '') +
+      (oc ? '<br/><span style="color:#8892b0">' + oc + ' observations</span>' : '')
+    )
+    .addTo(map3d);
+}
+
+function reset3dView() {
+  if (!map3d) return;
+  highlighted3dWs = null;
+  map3d.setFilter('ws-fill-highlight', ['==', 'name', '']);
+  map3d.setFilter('ws-lines-highlight', ['==', 'name', '']);
+
+  map3d.flyTo({
+    center: [-72.1, 43.8],
+    zoom: 7.8,
+    pitch: 55,
+    bearing: -15,
+    duration: 1800
+  });
+}
+
+/* ═══ MODE TOGGLE ═══ */
+$('btn2d').addEventListener('click', () => {
+  if (!mode3d) return;
+  mode3d = false;
+  $('btn2d').classList.add('active');
+  $('btn3d').classList.remove('active');
+  $('map').classList.remove('hidden');
+  $('map3d').classList.remove('active');
+  $('layerToggles2d').style.display = '';
+  // Refresh Leaflet map size since it was hidden
+  map.invalidateSize();
+});
+
+$('btn3d').addEventListener('click', () => {
+  if (mode3d) return;
+  mode3d = true;
+  $('btn3d').classList.add('active');
+  $('btn2d').classList.remove('active');
+  $('map').classList.add('hidden');
+  $('map3d').classList.add('active');
+  $('layerToggles2d').style.display = 'none';
+  // Initialize 3D map on first use
+  init3dMap();
+  if (map3d) {
+    map3d.resize();
+    // Sync watershed obs counts to 3D if available
+    if (map3d.getSource('watersheds')) {
+      map3d.getSource('watersheds').setData(wsGJ);
+    }
+  }
+});
 })();
 </script>
 </body>
