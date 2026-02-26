@@ -8,7 +8,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -327,30 +327,7 @@ async function fj(p) {
   }
 }
 
-/* ── Proj4 setup for EPSG:3437 (NH State Plane Feet) ── */
-proj4.defs('EPSG:3437', '+proj=tmerc +lat_0=42.5 +lon_0=-71.66666666666667 +k=0.999966667 +x_0=300000.0000000001 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs');
-
-function reprojectCoords(coords) {
-  // Recursively reproject coordinate arrays from EPSG:3437 to WGS84
-  if (typeof coords[0] === 'number') {
-    const [lng, lat] = proj4('EPSG:3437', 'EPSG:4326', [coords[0], coords[1]]);
-    return [lng, lat];
-  }
-  return coords.map(c => reprojectCoords(c));
-}
-
-function reprojectGeoJSON(gj) {
-  if (!gj || !gj.features) return gj;
-  const out = JSON.parse(JSON.stringify(gj));
-  out.features.forEach(f => {
-    if (f.geometry && f.geometry.coordinates) {
-      f.geometry.coordinates = reprojectCoords(f.geometry.coordinates);
-    }
-  });
-  // Remove CRS property so Leaflet uses default WGS84
-  delete out.crs;
-  return out;
-}
+/* Data is already in WGS84, no reprojection needed */
 
 /* ── Trail cache ── */
 const trailCache = {};
@@ -359,32 +336,29 @@ async function loadTrails(watershedName) {
   if (trailCache[watershedName]) return trailCache[watershedName];
   const file = TRAIL_FILES[watershedName];
   if (!file) return null;
-  const raw = await fj('data/' + file);
+  const raw = await fj(file);
   if (!raw) return null;
-  const reprojected = reprojectGeoJSON(raw);
   // Tag each trail with its watershed name
-  reprojected.features.forEach(f => {
+  raw.features.forEach(f => {
     f.properties = f.properties || {};
     f.properties._ws = watershedName;
     if (!f.properties.trailname) {
       f.properties.trailname = f.properties.TRAIL_NAME || f.properties.Name || 'Trail';
     }
   });
-  trailCache[watershedName] = reprojected;
-  return reprojected;
+  trailCache[watershedName] = raw;
+  return raw;
 }
 
 /* ── Initialize Map ── */
 sL('Loading watersheds…');
 
-const wsGJ = await fj('data/nh_8.geojson');
-// State boundary is in EPSG:3437, reproject it
-const stRaw = await fj('data/State.geojson');
-const stGJ = stRaw ? reprojectGeoJSON(stRaw) : null;
+const wsGJ = await fj('nh_8.geojson');
+const stGJ = await fj('State.geojson');
 
 if (!wsGJ) {
   hL();
-  alert('Could not load watershed data. Check that data/nh_8.geojson exists.');
+  alert('Could not load watershed data. Check that nh_8.geojson exists in your repo root.');
   return;
 }
 
