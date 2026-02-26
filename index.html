@@ -293,11 +293,11 @@ const TRAIL_FILES = {
 
 /* Fall foliage watershed border palette */
 const WC = [
-  '#c0392b','#e67e22','#d4a017','#27ae60','#2980b9',
-  '#8e44ad','#e74c3c','#f39c12','#1abc9c','#6d3fd4',
-  '#d35400','#16a085','#c0392b','#2ecc71','#9b59b6',
-  '#e67e22','#2980b9','#d4a017','#8e44ad','#e74c3c',
-  '#27ae60','#f39c12','#1abc9c','#d35400','#c0392b'
+  '#ff4444','#ff8c1a','#ffd700','#33d17a','#3daee9',
+  '#b366ff','#ff6b6b','#ffaa33','#2de6a3','#9d6fff',
+  '#ff6600','#1affc6','#ff4444','#50fa7b','#cc66ff',
+  '#ff8c1a','#3daee9','#ffd700','#b366ff','#ff6b6b',
+  '#33d17a','#ffaa33','#2de6a3','#ff6600','#ff4444'
 ];
 
 /* 8-stop density — deep forest to blazing autumn */
@@ -397,13 +397,13 @@ function showAllWatersheds(fitBounds) {
         let ci = 0;
         for (let i = DB.length-1; i >= 0; i--) { if (n >= DB[i]) { ci=i; break; } }
         const top = f.properties._top;
-        return { fillColor: DC[ci], fillOpacity: 1, color: top ? '#f97316' : c, weight: top ? 4 : 2.5, opacity: top ? 1 : .55 };
+        return { fillColor: DC[ci], fillOpacity: 1, color: top ? '#f97316' : c, weight: top ? 5 : 3.5, opacity: top ? 1 : .8 };
       }
-      return { fillColor: 'transparent', fillOpacity: 0, color: c, weight: 2.5, opacity: .5 };
+      return { fillColor: 'transparent', fillOpacity: 0, color: c, weight: 3.5, opacity: .85 };
     },
     onEachFeature: (f, ly) => {
       ly.on({
-        mouseover: e => { e.target.setStyle({ weight: 4, opacity: 1, color: '#00ffc8' }); e.target.bringToFront(); },
+        mouseover: e => { e.target.setStyle({ weight: 5.5, opacity: 1, color: '#00ffc8' }); e.target.bringToFront(); },
         mouseout: e => lWS.resetStyle(e.target),
         click: () => drillIntoWatershed(f.properties.name)
       });
@@ -425,7 +425,7 @@ async function drillIntoWatershed(wsName) {
   const c = wcm[wsName] || '#00b48c';
   lWS = L.geoJSON(feat, {
     pane: 'wsPane',
-    style: { fillColor: 'transparent', fillOpacity: 0, color: c, weight: 3, opacity: .7 },
+    style: { fillColor: 'transparent', fillOpacity: 0, color: c, weight: 4, opacity: .9 },
     interactive: false
   });
   lWS.addTo(map);
