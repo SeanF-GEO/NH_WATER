@@ -14,120 +14,168 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root {
-  --void: #090a12; --night: #0e1019; --dusk: #151726; --twilight: #1c1f34;
-  --mist: #272b4a; --fog: #3b4068;
-  --blood: #8b2030; --crimson: #b83050; --ember: #d4785c; --amber: #c9a050;
-  --gold: #daa520; --moon: #c8cdea; --silver: #949cc0; --frost: #eceef8;
-  --inat: #85bb40; --ebird: #5ca0e0;
-  --text1: #e6e8f4; --text2: #949cc0; --text3: #585e80;
-  --bdr: #222540; --bdr2: #343868;
+  /* ── New palette ── */
+  --void: #092018;
+  --night: #104928;
+  --dusk: #324939;
+  --twilight: #325f5a;
+  --mist: #404038;
+  --fog: #689f99;
+
+  --teal: #37887f;
+  --teal-lt: #689f99;
+  --sage: #98c1b1;
+  --dk-teal: #325f5a;
+  --brown: #6c391e;
+  --brown-lt: #86593c;
+
+  --inat: #85bb40;
+
+  --text1: #d8ece4;
+  --text2: #98c1b1;
+  --text3: #689f99;
+  --bdr: #325f5a;
+  --bdr2: #37887f;
+
   --fd: 'Cormorant Garamond', Georgia, serif;
   --fb: 'Outfit', system-ui, sans-serif;
-  --sb: 380px; --rad: 10px;
+  --sb: 400px;
+  --rad: 10px;
   --ease: cubic-bezier(.25,.46,.45,.94);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; font-family: var(--fb); background: var(--void); color: var(--text1); -webkit-font-smoothing: antialiased; }
-.sidebar { position: fixed; top: 0; left: 0; width: var(--sb); height: 100vh; background: var(--night); border-right: 1px solid var(--bdr); display: flex; flex-direction: column; z-index: 1000; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--fog) transparent; }
-.sidebar::-webkit-scrollbar { width: 5px; } .sidebar::-webkit-scrollbar-thumb { background: var(--fog); border-radius: 3px; }
-.sb-hd { padding: 28px 28px 22px; border-bottom: 1px solid var(--bdr); position: relative; overflow: hidden; }
-.sb-hd::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 25% 80%, rgba(139,32,48,.18), transparent 55%), radial-gradient(ellipse at 75% 15%, rgba(60,50,140,.12), transparent 50%); pointer-events: none; }
-.hd-eye { font-size: .56rem; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--crimson); margin-bottom: 8px; position: relative; }
-.hd-t { font-family: var(--fd); font-size: 1.85rem; font-weight: 700; line-height: 1.08; color: var(--frost); position: relative; }
-.hd-s { font-family: var(--fd); font-size: .9rem; font-weight: 400; font-style: italic; color: var(--silver); margin-top: 5px; position: relative; }
-.pnl { padding: 20px 28px; border-bottom: 1px solid var(--bdr); }
-.pnl-lb { display: flex; align-items: center; gap: 8px; font-size: .57rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
-.sn { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .58rem; font-weight: 700; color: var(--silver); border: 1px solid var(--bdr2); background: var(--mist); }
-.sn.on { background: var(--blood); color: var(--frost); border-color: var(--crimson); }
+
+/* ═══ SIDEBAR ═══ */
+.sidebar { position: fixed; top: 0; left: 0; width: var(--sb); height: 100vh; background: var(--night); border-right: 2px solid var(--bdr); display: flex; flex-direction: column; z-index: 1000; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--fog) transparent; }
+.sidebar::-webkit-scrollbar { width: 6px; } .sidebar::-webkit-scrollbar-thumb { background: var(--fog); border-radius: 3px; }
+
+.sb-hd { padding: 32px 30px 26px; border-bottom: 2px solid var(--bdr); position: relative; overflow: hidden; }
+.sb-hd::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 25% 80%, rgba(55,136,127,.2), transparent 55%), radial-gradient(ellipse at 75% 15%, rgba(108,57,30,.15), transparent 50%); pointer-events: none; }
+.hd-eye { font-size: .7rem; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--teal); margin-bottom: 10px; position: relative; }
+.hd-t { font-family: var(--fd); font-size: 2.2rem; font-weight: 700; line-height: 1.08; color: #e8f4ef; position: relative; }
+.hd-s { font-family: var(--fd); font-size: 1.1rem; font-weight: 400; font-style: italic; color: var(--sage); margin-top: 6px; position: relative; }
+
+/* ═══ PANELS ═══ */
+.pnl { padding: 22px 30px; border-bottom: 2px solid var(--bdr); }
+.pnl-lb { display: flex; align-items: center; gap: 10px; font-size: .72rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+.sn { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: var(--sage); border: 1px solid var(--bdr2); background: var(--dusk); }
+.sn.on { background: var(--brown); color: #e8f4ef; border-color: var(--brown-lt); }
+
+/* ═══ SEARCH ═══ */
 .sw { position: relative; }
-.si-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; transition: color .2s; }
-.sinp { width: 100%; padding: 13px 16px 13px 42px; background: var(--dusk); border: 1.5px solid var(--bdr); border-radius: var(--rad); color: var(--text1); font-family: var(--fb); font-size: .9rem; outline: none; transition: border-color .3s, box-shadow .3s; }
+.si-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; transition: color .2s; }
+.sinp { width: 100%; padding: 14px 18px 14px 46px; background: var(--dusk); border: 2px solid var(--bdr); border-radius: var(--rad); color: var(--text1); font-family: var(--fb); font-size: 1.05rem; outline: none; transition: border-color .3s, box-shadow .3s; }
 .sinp::placeholder { color: var(--text3); font-weight: 300; }
-.sinp:focus { border-color: var(--crimson); box-shadow: 0 0 0 3px rgba(184,48,80,.15); }
-.sinp:focus ~ .si-icon { color: var(--crimson); }
-.shint { font-size: .68rem; color: var(--text3); margin-top: 8px; font-style: italic; font-family: var(--fd); }
-.sugs { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--twilight); border: 1px solid var(--bdr2); border-radius: var(--rad); max-height: 320px; overflow-y: auto; z-index: 100; box-shadow: 0 16px 50px rgba(0,0,0,.6); display: none; }
+.sinp:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(55,136,127,.2); }
+.sinp:focus ~ .si-icon { color: var(--teal); }
+.shint { font-size: .82rem; color: var(--text3); margin-top: 10px; font-style: italic; font-family: var(--fd); }
+
+/* ═══ SUGGESTIONS ═══ */
+.sugs { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--dusk); border: 2px solid var(--bdr2); border-radius: var(--rad); max-height: 360px; overflow-y: auto; z-index: 100; box-shadow: 0 16px 50px rgba(0,0,0,.5); display: none; }
 .sugs.open { display: block; }
-.sg { padding: 11px 16px; cursor: pointer; border-bottom: 1px solid var(--bdr); transition: background .12s; display: flex; align-items: center; gap: 12px; }
-.sg:last-child { border-bottom: none; } .sg:hover { background: var(--mist); }
-.sg-img { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; background: var(--dusk); flex-shrink: 0; border: 1px solid var(--bdr); }
+.sg { padding: 12px 18px; cursor: pointer; border-bottom: 1px solid var(--bdr); transition: background .12s; display: flex; align-items: center; gap: 14px; }
+.sg:last-child { border-bottom: none; } .sg:hover { background: var(--twilight); }
+.sg-img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: var(--void); flex-shrink: 0; border: 1px solid var(--bdr); }
 .sg-info { flex: 1; min-width: 0; }
-.sg-c { font-size: .88rem; font-weight: 600; color: var(--frost); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sg-s { font-size: .72rem; color: var(--silver); font-style: italic; font-family: var(--fd); }
-.sg-r { font-size: .52rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--crimson); background: rgba(184,48,80,.12); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(184,48,80,.2); flex-shrink: 0; }
-.badge { margin-top: 14px; padding: 12px 16px; background: linear-gradient(135deg, rgba(139,32,48,.1), rgba(60,50,140,.08)); border: 1px solid rgba(184,48,80,.2); border-radius: var(--rad); display: none; align-items: center; gap: 12px; animation: fu .35s var(--ease); }
+.sg-c { font-size: 1.02rem; font-weight: 600; color: #e8f4ef; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sg-s { font-size: .88rem; color: var(--sage); font-style: italic; font-family: var(--fd); }
+.sg-r { font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--teal); background: rgba(55,136,127,.12); padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(55,136,127,.25); flex-shrink: 0; }
+
+/* ═══ BADGE ═══ */
+.badge { margin-top: 16px; padding: 14px 18px; background: linear-gradient(135deg, rgba(55,136,127,.12), rgba(108,57,30,.08)); border: 2px solid rgba(55,136,127,.25); border-radius: var(--rad); display: none; align-items: center; gap: 14px; animation: fu .35s var(--ease); }
 .badge.vis { display: flex; }
 @keyframes fu { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-.b-img { width: 38px; height: 38px; border-radius: 8px; object-fit: cover; background: var(--dusk); border: 1px solid var(--bdr); }
+.b-img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--void); border: 1px solid var(--bdr); }
 .b-txt { flex: 1; min-width: 0; }
-.b-c { font-weight: 600; font-size: .88rem; color: var(--ember); }
-.b-s { font-size: .72rem; color: var(--silver); font-style: italic; font-family: var(--fd); }
-.b-x { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.3rem; line-height: 1; padding: 4px; border-radius: 4px; transition: color .15s; }
-.b-x:hover { color: var(--crimson); }
-.tg { display: flex; flex-direction: column; gap: 5px; }
-.tl { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: .82rem; color: var(--text2); user-select: none; padding: 4px 0; }
+.b-c { font-weight: 600; font-size: 1.05rem; color: var(--brown-lt); }
+.b-s { font-size: .88rem; color: var(--sage); font-style: italic; font-family: var(--fd); }
+.b-x { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.5rem; line-height: 1; padding: 4px; border-radius: 4px; transition: color .15s; }
+.b-x:hover { color: var(--teal); }
+
+/* ═══ TOGGLES ═══ */
+.tg { display: flex; flex-direction: column; gap: 6px; }
+.tl { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: .98rem; color: var(--text2); user-select: none; padding: 5px 0; }
 .tl input { display: none; }
-.tt { width: 34px; height: 18px; background: var(--dusk); border: 1px solid var(--bdr); border-radius: 9px; position: relative; flex-shrink: 0; transition: background .25s, border-color .25s; }
+.tt { width: 38px; height: 20px; background: var(--void); border: 2px solid var(--bdr); border-radius: 10px; position: relative; flex-shrink: 0; transition: background .25s, border-color .25s; }
 .tt::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: var(--text3); border-radius: 50%; transition: transform .25s var(--ease), background .25s; }
-.tl input:checked + .tt { background: rgba(184,48,80,.15); border-color: rgba(184,48,80,.4); }
-.tl input:checked + .tt::after { transform: translateX(16px); background: var(--crimson); }
-.tl-lb { display: flex; align-items: center; gap: 7px; }
-.sd { width: 7px; height: 7px; border-radius: 50%; } .sd.i { background: var(--inat); } .sd.e { background: var(--ebird); }
+.tl input:checked + .tt { background: rgba(55,136,127,.2); border-color: var(--teal); }
+.tl input:checked + .tt::after { transform: translateX(18px); background: var(--teal); }
+.tl-lb { display: flex; align-items: center; gap: 8px; }
+.sd { width: 9px; height: 9px; border-radius: 50%; } .sd.i { background: var(--inat); }
+
+/* ═══ RESULTS ═══ */
 .rp { display: none; } .rp.vis { display: block; }
-.rs { margin-bottom: 18px; }
-.rs h4 { font-family: var(--fd); font-size: .95rem; font-weight: 700; color: var(--frost); margin-bottom: 10px; }
-.rr { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; cursor: pointer; }
-.rr:hover .rn { color: var(--frost); }
-.rn { color: var(--text2); font-size: .8rem; max-width: 195px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .15s; }
-.rv { font-weight: 700; font-size: .82rem; font-variant-numeric: tabular-nums; color: var(--ember); }
-.rb { height: 4px; background: var(--bdr); border-radius: 2px; margin: 3px 0 8px; overflow: hidden; }
-.rb-f { height: 100%; border-radius: 2px; transition: width .6s var(--ease); }
-.hero-card { padding: 10px 14px; background: linear-gradient(135deg, rgba(184,48,80,.1), rgba(60,50,140,.06)); border: 1px solid rgba(184,48,80,.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: background .2s; }
-.hero-card:hover { background: linear-gradient(135deg, rgba(184,48,80,.2), rgba(60,50,140,.12)); }
-.hero-name { font-family: var(--fd); font-size: 1rem; font-weight: 700; color: var(--ember); }
-.hero-sub { font-size: .78rem; color: var(--text2); }
-.hero-hint { font-size: .65rem; color: var(--crimson); margin-top: 4px; font-style: italic; }
-.back-btn { display: none; margin-bottom: 12px; padding: 8px 14px; background: var(--dusk); border: 1px solid var(--bdr2); border-radius: 8px; color: var(--moon); font-family: var(--fb); font-size: .8rem; cursor: pointer; transition: background .2s, border-color .2s; width: 100%; text-align: left; }
-.back-btn:hover { background: var(--mist); border-color: var(--crimson); }
+.rs { margin-bottom: 20px; }
+.rs h4 { font-family: var(--fd); font-size: 1.15rem; font-weight: 700; color: #e8f4ef; margin-bottom: 12px; }
+.rr { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; cursor: pointer; }
+.rr:hover .rn { color: #e8f4ef; }
+.rn { color: var(--text2); font-size: .95rem; max-width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .15s; }
+.rv { font-weight: 700; font-size: .98rem; font-variant-numeric: tabular-nums; color: var(--brown-lt); }
+.rb { height: 5px; background: var(--bdr); border-radius: 3px; margin: 4px 0 10px; overflow: hidden; }
+.rb-f { height: 100%; border-radius: 3px; transition: width .6s var(--ease); }
+.hero-card { padding: 12px 16px; background: linear-gradient(135deg, rgba(55,136,127,.12), rgba(108,57,30,.08)); border: 2px solid rgba(55,136,127,.25); border-radius: 8px; margin-bottom: 12px; cursor: pointer; transition: background .2s; }
+.hero-card:hover { background: linear-gradient(135deg, rgba(55,136,127,.22), rgba(108,57,30,.14)); }
+.hero-name { font-family: var(--fd); font-size: 1.15rem; font-weight: 700; color: var(--brown-lt); }
+.hero-sub { font-size: .9rem; color: var(--text2); }
+.hero-hint { font-size: .78rem; color: var(--teal); margin-top: 4px; font-style: italic; }
+
+/* ═══ BACK BUTTON ═══ */
+.back-btn { display: none; margin-bottom: 14px; padding: 10px 16px; background: var(--void); border: 2px solid var(--bdr2); border-radius: 8px; color: var(--sage); font-family: var(--fb); font-size: .95rem; cursor: pointer; transition: background .2s, border-color .2s; width: 100%; text-align: left; }
+.back-btn:hover { background: var(--dusk); border-color: var(--teal); }
 .back-btn.vis { display: block; }
-.trail-info { margin-top: 12px; padding: 10px 14px; background: linear-gradient(135deg, rgba(218,165,32,.08), rgba(60,50,140,.04)); border: 1px solid rgba(218,165,32,.2); border-radius: 8px; display: none; }
+
+/* ═══ TRAIL INFO ═══ */
+.trail-info { margin-top: 14px; padding: 12px 16px; background: linear-gradient(135deg, rgba(134,89,60,.1), rgba(55,136,127,.06)); border: 2px solid rgba(134,89,60,.25); border-radius: 8px; display: none; }
 .trail-info.vis { display: block; }
-.trail-info h5 { font-family: var(--fd); font-size: .88rem; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
-.trail-info .trail-count { font-size: .75rem; color: var(--text2); margin-bottom: 6px; }
-.trail-item { font-size: .78rem; color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--bdr); display: flex; justify-content: space-between; }
+.trail-info h5 { font-family: var(--fd); font-size: 1.05rem; font-weight: 700; color: var(--brown-lt); margin-bottom: 8px; }
+.trail-info .trail-count { font-size: .88rem; color: var(--text2); margin-bottom: 8px; }
+.trail-item { font-size: .9rem; color: var(--text2); padding: 4px 0; border-bottom: 1px solid var(--bdr); display: flex; justify-content: space-between; }
 .trail-item:last-child { border-bottom: none; }
-.trail-item .tn { color: var(--frost); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.trail-item .to { color: var(--gold); font-weight: 600; }
-.ebird-note { font-size: .68rem; color: var(--text3); margin-top: 8px; font-style: italic; font-family: var(--fd); padding: 8px 10px; background: rgba(92,160,224,.06); border: 1px solid rgba(92,160,224,.15); border-radius: 6px; }
-.ebird-note a { color: var(--ebird); }
-.sb-ft { margin-top: auto; padding: 18px 28px; border-top: 1px solid var(--bdr); background: var(--dusk); }
+.trail-item .tn { color: #e8f4ef; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trail-item .to { color: var(--brown-lt); font-weight: 600; }
+
+/* ═══ FOOTER ═══ */
+.sb-ft { margin-top: auto; padding: 20px 30px; border-top: 2px solid var(--bdr); background: var(--void); }
 .st-r { display: flex; justify-content: space-between; }
 .stat { text-align: center; }
-.st-v { display: block; font-family: var(--fd); font-size: 1.35rem; font-weight: 700; color: var(--ember); line-height: 1.2; }
-.st-l { font-size: .55rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); font-weight: 500; }
+.st-v { display: block; font-family: var(--fd); font-size: 1.6rem; font-weight: 700; color: var(--brown-lt); line-height: 1.2; }
+.st-l { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); font-weight: 500; }
+
+/* ═══ MAP ═══ */
 #map { position: fixed; top: 0; left: var(--sb); right: 0; bottom: 0; z-index: 1; background: var(--void); }
-.ld { position: fixed; top: 0; left: var(--sb); right: 0; bottom: 0; background: rgba(9,10,18,.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; }
+
+/* ═══ LOADING ═══ */
+.ld { position: fixed; top: 0; left: var(--sb); right: 0; bottom: 0; background: rgba(9,32,24,.88); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; }
 .ld.vis { display: flex; }
-.sp { width: 38px; height: 38px; border: 3px solid var(--bdr); border-top-color: var(--crimson); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 14px; }
+.sp { width: 42px; height: 42px; border: 3px solid var(--bdr); border-top-color: var(--teal); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 16px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.lm { font-size: .82rem; color: var(--silver); font-family: var(--fd); font-style: italic; }
-.leaflet-popup-content-wrapper { background: var(--twilight) !important; color: var(--text1) !important; border-radius: var(--rad) !important; border: 1px solid var(--bdr2) !important; box-shadow: 0 12px 45px rgba(0,0,0,.6) !important; }
-.leaflet-popup-tip { background: var(--twilight) !important; }
-.leaflet-popup-content { font-family: var(--fb) !important; font-size: .8rem !important; line-height: 1.55 !important; margin: 12px 16px !important; }
-.leaflet-popup-content strong { color: var(--ember); font-family: var(--fd); font-size: .95rem; }
-.leaflet-popup-content a { color: var(--moon); text-decoration: none; }
+.lm { font-size: 1rem; color: var(--sage); font-family: var(--fd); font-style: italic; }
+
+/* ═══ LEAFLET OVERRIDES ═══ */
+.leaflet-popup-content-wrapper { background: var(--dusk) !important; color: var(--text1) !important; border-radius: var(--rad) !important; border: 2px solid var(--bdr2) !important; box-shadow: 0 12px 45px rgba(0,0,0,.5) !important; }
+.leaflet-popup-tip { background: var(--dusk) !important; }
+.leaflet-popup-content { font-family: var(--fb) !important; font-size: .95rem !important; line-height: 1.6 !important; margin: 14px 18px !important; }
+.leaflet-popup-content strong { color: var(--brown-lt); font-family: var(--fd); font-size: 1.1rem; }
+.leaflet-popup-content a { color: var(--sage); text-decoration: none; }
 .leaflet-popup-content a:hover { text-decoration: underline; }
-.leaflet-popup-close-button { color: var(--text3) !important; font-size: 18px !important; }
-.leaflet-control-zoom a { background: var(--twilight) !important; color: var(--frost) !important; border-color: var(--bdr) !important; }
-.leaflet-control-zoom a:hover { background: var(--mist) !important; }
-.leaflet-control-attribution { background: rgba(14,16,25,.9) !important; color: var(--text3) !important; font-size: .55rem !important; }
-.leaflet-control-attribution a { color: var(--silver) !important; }
-.legend { background: var(--twilight); border: 1px solid var(--bdr2); border-radius: var(--rad); padding: 14px 18px; font-size: .7rem; color: var(--text2); line-height: 1.8; }
-.legend-t { font-weight: 600; font-size: .56rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
-.legend-r { display: flex; align-items: center; gap: 8px; }
-.legend-s { width: 20px; height: 11px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.06); }
-.ws-tip { background: var(--twilight) !important; color: var(--frost) !important; border: 1px solid var(--bdr2) !important; border-radius: 6px !important; padding: 4px 10px !important; font-family: var(--fd) !important; font-size: .82rem !important; font-weight: 600 !important; box-shadow: 0 6px 20px rgba(0,0,0,.4) !important; }
-.trail-tip { background: rgba(218,165,32,.9) !important; color: #1a1a2e !important; border: none !important; border-radius: 4px !important; padding: 2px 8px !important; font-family: var(--fb) !important; font-size: .7rem !important; font-weight: 600 !important; box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; white-space: nowrap !important; }
+.leaflet-popup-close-button { color: var(--text3) !important; font-size: 20px !important; }
+.leaflet-control-zoom a { background: var(--dusk) !important; color: #e8f4ef !important; border-color: var(--bdr) !important; }
+.leaflet-control-zoom a:hover { background: var(--twilight) !important; }
+.leaflet-control-attribution { background: rgba(9,32,24,.9) !important; color: var(--text3) !important; font-size: .6rem !important; }
+.leaflet-control-attribution a { color: var(--sage) !important; }
+
+/* ═══ LEGEND ═══ */
+.legend { background: var(--dusk); border: 2px solid var(--bdr2); border-radius: var(--rad); padding: 16px 20px; font-size: .82rem; color: var(--text2); line-height: 2; }
+.legend-t { font-weight: 600; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+.legend-r { display: flex; align-items: center; gap: 10px; }
+.legend-s { width: 22px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.08); }
+
+/* ═══ TOOLTIPS ═══ */
+.ws-tip { background: var(--dusk) !important; color: #e8f4ef !important; border: 2px solid var(--bdr2) !important; border-radius: 6px !important; padding: 5px 12px !important; font-family: var(--fd) !important; font-size: 1rem !important; font-weight: 600 !important; box-shadow: 0 6px 20px rgba(0,0,0,.4) !important; }
+.trail-tip { background: rgba(134,89,60,.92) !important; color: #f0e8df !important; border: none !important; border-radius: 4px !important; padding: 3px 10px !important; font-family: var(--fb) !important; font-size: .82rem !important; font-weight: 600 !important; box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; white-space: nowrap !important; }
+
+/* ═══ MOBILE ═══ */
 @media (max-width: 800px) { :root { --sb: 100vw; } .sidebar { width: 100%; height: auto; max-height: 42vh; position: relative; } #map { position: relative; left: 0; height: 58vh; } body { overflow-y: auto; } .ld { left: 0; } }
 </style>
 </head>
@@ -143,7 +191,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--fb); background:
   <div class="pnl">
     <label class="pnl-lb"><span class="sn on">1</span>Find a Species</label>
     <div class="sw">
-      <svg class="si-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      <svg class="si-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
       <input type="text" id="inp" class="sinp" placeholder="Black Bear, Moose, Bald Eagle…" autocomplete="off"/>
       <div id="sugs" class="sugs"></div>
     </div>
@@ -156,20 +204,11 @@ html, body { height: 100%; overflow: hidden; font-family: var(--fb); background:
   </div>
 
   <div class="pnl">
-    <label class="pnl-lb"><span class="sn">2</span>Data &amp; Layers</label>
-    <div class="tg">
-      <label class="tl"><input type="checkbox" id="tINat" checked/><span class="tt"></span><span class="tl-lb"><span class="sd i"></span>iNaturalist</span></label>
-      <label class="tl"><input type="checkbox" id="tEB"/><span class="tt"></span><span class="tl-lb"><span class="sd e"></span>eBird</span></label>
-    </div>
-    <div id="ebirdNote" class="ebird-note" style="margin-top:8px">
-      eBird requires an API key. <a href="https://ebird.org/api/keygen" target="_blank">Get one free here</a>, then paste below:<br/>
-      <input type="text" id="ebirdKeyInput" class="sinp" style="margin-top:6px;padding:8px 12px 8px 12px;font-size:.78rem" placeholder="Paste eBird API key…"/>
-    </div>
-    <div style="height:8px"></div>
+    <label class="pnl-lb"><span class="sn">2</span>Layers</label>
     <div class="tg">
       <label class="tl"><input type="checkbox" id="tWS" checked/><span class="tt"></span><span class="tl-lb">Watersheds</span></label>
+      <label class="tl"><input type="checkbox" id="tPt" checked/><span class="tt"></span><span class="tl-lb"><span class="sd i"></span>Observation Points</span></label>
       <label class="tl"><input type="checkbox" id="tHt"/><span class="tt"></span><span class="tl-lb">Heatmap</span></label>
-      <label class="tl"><input type="checkbox" id="tPt" checked/><span class="tt"></span><span class="tl-lb">Observation Points</span></label>
     </div>
   </div>
 
@@ -200,10 +239,8 @@ html, body { height: 100%; overflow: hidden; font-family: var(--fb); background:
 (async function() {
 'use strict';
 
-/* ═══ CONFIG ═══ */
 const NH = { swlat: 42.697, swlng: -72.557, nelat: 45.305, nelng: -70.703 };
 const INAT = 'https://api.inaturalist.org/v1';
-let EBIRD_KEY = '';
 
 const TRAIL_FILES = {
   'Ammonoosuc River-Connecticut River': 'Trails_Ammonoosuc_River_Connecticut_River.geojson',
@@ -224,13 +261,14 @@ const TRAIL_FILES = {
   'Winnipesaukee River': 'Trails_Winnipesaukee_River.geojson'
 };
 
-const WC = ['#b83050','#9040a0','#6048c0','#3860d0','#2898b0','#28a078','#60a838',
-            '#a8a028','#d08828','#c05040','#d06888','#7858b8','#4078d8','#20b8a0',
-            '#48b858','#c8b030','#e06048'];
-const DC = ['rgba(28,31,52,0.4)','#28385a','#384898','#7848a8','#b83868','#d04030'];
+/* Watershed outline colors from palette */
+const WC = ['#37887f','#689f99','#325f5a','#98c1b1','#37887f','#689f99','#325f5a',
+            '#98c1b1','#37887f','#689f99','#325f5a','#98c1b1','#37887f','#689f99',
+            '#325f5a','#98c1b1','#37887f'];
+/* Density fill colors */
+const DC = ['rgba(50,73,57,0.08)','rgba(55,136,127,0.12)','rgba(55,136,127,0.22)','rgba(134,89,60,0.30)','rgba(108,57,30,0.40)','rgba(108,57,30,0.55)'];
 const DB = [0, 1, 5, 15, 40, 100];
 
-/* ═══ HELPERS ═══ */
 const $ = id => document.getElementById(id);
 function sL(m) { $('lmsg').textContent = m; $('ld').classList.add('vis'); }
 function hL() { $('ld').classList.remove('vis'); }
@@ -248,14 +286,14 @@ function reprojectCoords(coords, fromCRS) {
   return coords.map(c => reprojectCoords(c, fromCRS));
 }
 function detectCRS(gj) {
-  const crsName = gj?.crs?.properties?.name || '';
-  if (crsName.includes('3857')) return 'EPSG:3857';
-  if (crsName.includes('3437')) return 'EPSG:3437';
-  if (crsName.includes('4326') || crsName.includes('4269')) return null;
-  function firstCoord(c) { if (typeof c[0] === 'number') return c; return firstCoord(c[0]); }
+  const n = gj?.crs?.properties?.name || '';
+  if (n.includes('3857')) return 'EPSG:3857';
+  if (n.includes('3437')) return 'EPSG:3437';
+  if (n.includes('4326') || n.includes('4269')) return null;
+  function fc(c) { if (typeof c[0] === 'number') return c; return fc(c[0]); }
   for (const f of (gj.features || [])) {
     if (f.geometry?.coordinates) {
-      const c = firstCoord(f.geometry.coordinates);
+      const c = fc(f.geometry.coordinates);
       if (c) {
         if (Math.abs(c[0]) <= 180 && Math.abs(c[1]) <= 90) return null;
         if (Math.abs(c[0]) > 100000) return 'EPSG:3857';
@@ -267,11 +305,11 @@ function detectCRS(gj) {
 }
 function ensureWGS84(gj) {
   if (!gj || !gj.features) return gj;
-  const fromCRS = detectCRS(gj);
-  if (!fromCRS) { console.log('GeoJSON already WGS84'); return gj; }
-  console.log('Reprojecting from', fromCRS);
+  const from = detectCRS(gj);
+  if (!from) return gj;
+  console.log('Reprojecting from', from);
   const out = JSON.parse(JSON.stringify(gj));
-  out.features.forEach(f => { if (f.geometry?.coordinates) f.geometry.coordinates = reprojectCoords(f.geometry.coordinates, fromCRS); });
+  out.features.forEach(f => { if (f.geometry?.coordinates) f.geometry.coordinates = reprojectCoords(f.geometry.coordinates, from); });
   delete out.crs;
   return out;
 }
@@ -294,23 +332,12 @@ async function loadTrails(wsName) {
   return gj;
 }
 
-/* ═══ EBIRD KEY INPUT ═══ */
-$('ebirdKeyInput').addEventListener('change', function() {
-  EBIRD_KEY = this.value.trim();
-  if (EBIRD_KEY) {
-    console.log('eBird API key set');
-    $('tEB').checked = true;
-    if (curSp) pick(curSp);
-  }
-});
-
 /* ═══ LOAD DATA ═══ */
 sL('Loading watersheds…');
 const wsRaw = await fj('nh_8.geojson');
 const stRaw = await fj('State.geojson');
 const wsGJ = wsRaw ? ensureWGS84(wsRaw) : null;
 const stGJ = stRaw ? ensureWGS84(stRaw) : null;
-
 if (!wsGJ) { hL(); alert('Could not load nh_8.geojson'); return; }
 console.log('Loaded', wsGJ.features.length, 'watersheds');
 
@@ -320,12 +347,12 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; CARTO &copy; OSM', maxZoom: 19
 }).addTo(map);
 
-if (stGJ) L.geoJSON(stGJ, { style: { color: '#585e80', weight: 1.5, opacity: .5, dashArray: '6,4', fill: false }, interactive: false }).addTo(map);
+if (stGJ) L.geoJSON(stGJ, { style: { color: '#325f5a', weight: 1.5, opacity: .4, dashArray: '6,4', fill: false }, interactive: false }).addTo(map);
 
 const wcm = {};
 wsGJ.features.forEach((f, i) => { wcm[f.properties.name] = WC[i % WC.length]; });
 
-/* ═══ MAP PANES (z-order) ═══ */
+/* Map panes for z-order */
 map.createPane('wsPane'); map.getPane('wsPane').style.zIndex = 400;
 map.createPane('trailPane'); map.getPane('trailPane').style.zIndex = 450;
 map.createPane('pointPane'); map.getPane('pointPane').style.zIndex = 500;
@@ -335,10 +362,9 @@ let lWS = null, lTr = null, lObs = null, lHeat = null;
 let curSp = null, curObs = null;
 let activeWatershed = null, viewMode = 'all';
 
-/* ═══ SHOW ALL WATERSHEDS ═══ */
+/* ═══ ALL WATERSHEDS VIEW ═══ */
 function showAllWatersheds(fitBounds) {
-  viewMode = 'all';
-  activeWatershed = null;
+  viewMode = 'all'; activeWatershed = null;
   if (lWS) { map.removeLayer(lWS); lWS = null; }
   if (lTr) { map.removeLayer(lTr); lTr = null; }
   $('backBtn').classList.remove('vis');
@@ -349,19 +375,19 @@ function showAllWatersheds(fitBounds) {
   lWS = L.geoJSON(wsGJ, {
     pane: 'wsPane',
     style: f => {
+      const c = wcm[f.properties.name] || '#37887f';
       if (hasDensity) {
         const n = f.properties._oc || 0;
         let ci = 0;
         for (let i = DB.length - 1; i >= 0; i--) { if (n >= DB[i]) { ci = i; break; } }
         const top = f.properties._top;
-        return { fillColor: DC[ci], fillOpacity: top ? .75 : .45, color: top ? '#e8e0d0' : '#585e80', weight: top ? 3 : 1, opacity: top ? 1 : .5 };
+        return { fillColor: DC[ci], fillOpacity: 1, color: top ? '#98c1b1' : c, weight: top ? 4 : 2.5, opacity: top ? 1 : .7 };
       }
-      const c = wcm[f.properties.name] || '#585e80';
-      return { fillColor: c, fillOpacity: .3, color: c, weight: 1.5, opacity: .7 };
+      return { fillColor: c, fillOpacity: .08, color: c, weight: 2.5, opacity: .7 };
     },
     onEachFeature: (f, ly) => {
       ly.on({
-        mouseover: e => { e.target.setStyle({ weight: 3, fillOpacity: .65, color: '#c8cdea' }); e.target.bringToFront(); },
+        mouseover: e => { e.target.setStyle({ weight: 4, opacity: 1, color: '#98c1b1' }); e.target.bringToFront(); },
         mouseout: e => lWS.resetStyle(e.target),
         click: () => drillIntoWatershed(f.properties.name)
       });
@@ -373,29 +399,25 @@ function showAllWatersheds(fitBounds) {
   if (fitBounds !== false) map.fitBounds(lWS.getBounds(), { padding: [20, 20] });
 }
 
-/* ═══ DRILL INTO WATERSHED ═══ */
+/* ═══ DRILL INTO SINGLE WATERSHED ═══ */
 async function drillIntoWatershed(wsName) {
-  viewMode = 'single';
-  activeWatershed = wsName;
+  viewMode = 'single'; activeWatershed = wsName;
   if (lWS) { map.removeLayer(lWS); lWS = null; }
   if (lTr) { map.removeLayer(lTr); lTr = null; }
 
   const feat = wsGJ.features.find(f => f.properties.name === wsName);
   if (!feat) return;
 
-  // Show ONLY this watershed as a boundary (non-interactive)
-  const c = wcm[wsName] || '#585e80';
+  const c = wcm[wsName] || '#37887f';
   lWS = L.geoJSON(feat, {
     pane: 'wsPane',
-    style: { fillColor: c, fillOpacity: .12, color: c, weight: 2.5, opacity: .8 },
+    style: { fillColor: c, fillOpacity: .06, color: c, weight: 3, opacity: .8 },
     interactive: false
   });
   lWS.addTo(map);
   map.fitBounds(lWS.getBounds(), { padding: [50, 50] });
-
   $('backBtn').classList.add('vis');
 
-  // Load trails
   sL('Loading trails for ' + wsName + '…');
   const trailData = await loadTrails(wsName);
   hL();
@@ -409,16 +431,13 @@ async function drillIntoWatershed(wsName) {
     return;
   }
 
-  // Score trails against observations
+  // Score trails
   if (curObs && curObs.features.length) {
     trailData.features.forEach(t => { t.properties._on = 0; });
     curObs.features.forEach(obs => {
       const pt = turf.point(obs.geometry.coordinates);
       trailData.features.forEach(t => {
-        try {
-          const nearest = turf.nearestPointOnLine(t, pt);
-          if (nearest.properties.dist <= 0.5) t.properties._on++;
-        } catch(e) {}
+        try { if (turf.nearestPointOnLine(t, pt).properties.dist <= 0.5) t.properties._on++; } catch(e) {}
       });
     });
   }
@@ -430,31 +449,25 @@ async function drillIntoWatershed(wsName) {
     style: f => {
       const on = f.properties._on || 0;
       const s = on / maxObs;
-      if (curObs && on > 0) return { color: '#daa520', weight: 3 + s * 4, opacity: .5 + s * .5 };
-      return { color: '#e0c870', weight: 2, opacity: .45 };
+      if (curObs && on > 0) return { color: '#86593c', weight: 3 + s * 4, opacity: .5 + s * .5 };
+      return { color: '#689f99', weight: 2, opacity: .45 };
     },
     onEachFeature: (f, ly) => {
       const p = f.properties;
       const name = p.trailname || 'Trail';
-      // Click = popup with details
       ly.on('click', () => {
         const mi = p.miles ? ((+p.miles).toFixed(1) + ' mi') : '';
         const co = p.community || '';
-        const ob = p._on ? '<br/>Nearby observations: <b style="color:#daa520">' + p._on + '</b>' : '';
-        const url = p.mapurl ? '<br/><a href="' + p.mapurl + '" target="_blank" style="font-size:.72rem">Trail info &#8594;</a>' : '';
-        ly.bindPopup(
-          '<strong>' + name + '</strong>' +
-          '<br/><span style="color:#585e80;font-size:.72rem">' + co + (co && mi ? ' &middot; ' : '') + mi + '</span>' +
-          ob + url
-        ).openPopup();
+        const ob = p._on ? '<br/>Nearby observations: <b style="color:#86593c">' + p._on + '</b>' : '';
+        const url = p.mapurl ? '<br/><a href="' + p.mapurl + '" target="_blank" style="font-size:.85rem">Trail info &#8594;</a>' : '';
+        ly.bindPopup('<strong>' + name + '</strong><br/><span style="color:#689f99;font-size:.85rem">' + co + (co && mi ? ' &middot; ' : '') + mi + '</span>' + ob + url).openPopup();
       });
-      // Hover tooltip with trail name
       ly.bindTooltip(name, { sticky: true, className: 'trail-tip', direction: 'top', offset: [0, -8] });
     }
   });
   lTr.addTo(map);
 
-  // Sidebar trail list
+  // Sidebar
   const sorted = [...trailData.features].sort((a, b) => (b.properties._on || 0) - (a.properties._on || 0));
   const withObs = sorted.filter(t => (t.properties._on || 0) > 0).slice(0, 10);
   $('trailTitle').textContent = 'Trails in ' + wsName;
@@ -464,17 +477,15 @@ async function drillIntoWatershed(wsName) {
       '<div class="trail-item"><span class="tn">' + (t.properties.trailname || 'Trail') + '</span><span class="to">' + t.properties._on + ' nearby</span></div>'
     ).join('');
   } else if (!curObs) {
-    $('trailList').innerHTML = '<div style="font-size:.72rem;color:var(--text3);font-style:italic">Search a species to rank trails by sightings</div>';
+    $('trailList').innerHTML = '<div style="font-size:.85rem;color:var(--text3);font-style:italic">Search a species to rank trails by sightings</div>';
   } else {
-    $('trailList').innerHTML = '<div style="font-size:.72rem;color:var(--text3);font-style:italic">No observations near these trails</div>';
+    $('trailList').innerHTML = '<div style="font-size:.85rem;color:var(--text3);font-style:italic">No observations near these trails</div>';
   }
   $('trailInfo').classList.add('vis');
   $('sT').textContent = trailData.features.length;
 }
 
 $('backBtn').addEventListener('click', () => showAllWatersheds());
-
-// Init
 showAllWatersheds();
 hL();
 
@@ -496,7 +507,7 @@ inp.addEventListener('input', () => {
       }));
     } catch(e) {}
     if (!taxa.length) {
-      sugBox.innerHTML = '<div style="padding:14px 16px;color:var(--text3);font-size:.82rem;font-family:var(--fd);font-style:italic">No species found</div>';
+      sugBox.innerHTML = '<div style="padding:16px 18px;color:var(--text3);font-size:.95rem;font-family:var(--fd);font-style:italic">No species found</div>';
       sugBox.classList.add('open'); return;
     }
     sugBox.innerHTML = taxa.map(t =>
@@ -514,7 +525,7 @@ inp.addEventListener('input', () => {
 inp.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); const f = sugBox.querySelector('.sg'); if (f) f.click(); }});
 document.addEventListener('click', e => { if (!e.target.closest('.sw')) sugBox.classList.remove('open'); });
 
-/* ═══ FETCH OBSERVATIONS ═══ */
+/* ═══ FETCH OBSERVATIONS (iNaturalist only) ═══ */
 async function pick(sp) {
   curSp = sp;
   sugBox.classList.remove('open'); inp.value = '';
@@ -524,44 +535,16 @@ async function pick(sp) {
   sL('Fetching ' + sp.common + ' observations…');
 
   try {
-    // iNaturalist
     let all = [];
-    if ($('tINat').checked) {
-      for (let pg = 1; pg <= 5; pg++) {
-        const d = await (await fetch(INAT + '/observations?taxon_id=' + sp.id +
-          '&swlat='+NH.swlat+'&swlng='+NH.swlng+'&nelat='+NH.nelat+'&nelng='+NH.nelng +
-          '&quality_grade=research,needs_id&per_page=200&page='+pg+'&order=desc&order_by=observed_on')).json();
-        const r = d.results || [];
-        all = all.concat(r);
-        if (r.length < 200) break;
-      }
+    for (let pg = 1; pg <= 5; pg++) {
+      const d = await (await fetch(INAT + '/observations?taxon_id=' + sp.id +
+        '&swlat='+NH.swlat+'&swlng='+NH.swlng+'&nelat='+NH.nelat+'&nelng='+NH.nelng +
+        '&quality_grade=research,needs_id&per_page=200&page='+pg+'&order=desc&order_by=observed_on')).json();
+      const r = d.results || [];
+      all = all.concat(r);
+      if (r.length < 200) break;
     }
 
-    // eBird — use filtered taxonomy lookup (not full download)
-    let eb = [];
-    if ($('tEB').checked && EBIRD_KEY) {
-      try {
-        const specResp = await fetch(
-          'https://api.ebird.org/v2/ref/taxonomy/ebird?fmt=json&sci=' + encodeURIComponent(sp.sci),
-          { headers: { 'X-eBirdApiToken': EBIRD_KEY } }
-        );
-        if (specResp.ok) {
-          const specData = await specResp.json();
-          const match = Array.isArray(specData) ? specData.find(t => t.sciName.toLowerCase() === sp.sci.toLowerCase()) : null;
-          if (match) {
-            console.log('eBird species:', match.speciesCode);
-            const obsResp = await fetch(
-              'https://api.ebird.org/v2/data/obs/US-NH/recent/' + match.speciesCode + '?back=30',
-              { headers: { 'X-eBirdApiToken': EBIRD_KEY } }
-            );
-            if (obsResp.ok) eb = await obsResp.json() || [];
-            console.log('eBird observations:', eb.length);
-          }
-        }
-      } catch(e) { console.warn('eBird error:', e); }
-    }
-
-    // Build FeatureCollection
     const feats = [];
     all.filter(o => o.geojson).forEach(o => {
       feats.push({ type: 'Feature',
@@ -572,16 +555,9 @@ async function pick(sp) {
           uri: o.uri || 'https://www.inaturalist.org/observations/'+o.id }
       });
     });
-    eb.forEach(o => {
-      feats.push({ type: 'Feature',
-        geometry: { type: 'Point', coordinates: [o.lng, o.lat] },
-        properties: { id: o.subId, src: 'eBird', species: o.sciName||'', common: o.comName||'',
-          date: o.obsDt||'', loc: o.locName||'', uri: 'https://ebird.org/checklist/'+o.subId }
-      });
-    });
 
     curObs = { type: 'FeatureCollection', features: feats };
-    console.log('Observations:', feats.length, '(iNat:', all.filter(o=>o.geojson).length, ', eBird:', eb.length, ')');
+    console.log('Observations:', feats.length);
     analyze();
   } catch(e) { console.error('Fetch error:', e); hL(); }
 }
@@ -610,7 +586,6 @@ function analyze() {
   setTimeout(() => {
     const pts = curObs.features;
 
-    // Count per watershed
     wsGJ.features.forEach(f => { f.properties._oc = 0; f.properties._od = 0; f.properties._top = false; });
     pts.forEach(pt => {
       const tp = turf.point(pt.geometry.coordinates);
@@ -625,21 +600,19 @@ function analyze() {
     wsGJ.features.forEach(f => { if (f.properties._oc > topN) { topN = f.properties._oc; topWS = f; } });
     if (topWS) topWS.properties._top = true;
 
-    // Refresh watersheds with density styling
-    showAllWatersheds(false); // don't re-fit bounds
+    showAllWatersheds(false);
 
-    // Observation POINTS — in the high-z pointPane so they render ON TOP
+    // Points
     if (lObs) map.removeLayer(lObs);
     lObs = L.geoJSON(curObs, {
       pane: 'pointPane',
       pointToLayer: (f, ll) => L.circleMarker(ll, {
-        radius: 5, fillColor: f.properties.src === 'iNaturalist' ? '#85bb40' : '#5ca0e0',
-        color: '#090a12', weight: 1, fillOpacity: .85
+        radius: 6, fillColor: '#85bb40', color: '#092018', weight: 1.5, fillOpacity: .85
       }),
       onEachFeature: (f, ly) => {
         const p = f.properties;
-        const ph = p.photo ? '<img src="'+p.photo+'" style="width:100%;max-height:100px;object-fit:cover;border-radius:6px;margin-bottom:6px"/>' : '';
-        ly.bindPopup(ph+'<strong>'+(p.common||p.species)+'</strong><br/><em style="color:#949cc0;font-size:.72rem">'+p.species+'</em><br/><span style="color:#585e80;font-size:.72rem">'+p.src+' &middot; '+(p.date||'')+(p.user?' &middot; '+p.user:'')+(p.loc?'<br/>'+p.loc:'')+'</span><br/><a href="'+p.uri+'" target="_blank" style="font-size:.75rem">View observation &#8594;</a>');
+        const ph = p.photo ? '<img src="'+p.photo+'" style="width:100%;max-height:110px;object-fit:cover;border-radius:6px;margin-bottom:8px"/>' : '';
+        ly.bindPopup(ph+'<strong>'+(p.common||p.species)+'</strong><br/><em style="color:#98c1b1;font-size:.85rem">'+p.species+'</em><br/><span style="color:#689f99;font-size:.85rem">iNaturalist &middot; '+(p.date||'')+(p.user?' &middot; '+p.user:'')+'</span><br/><a href="'+p.uri+'" target="_blank" style="font-size:.88rem">View observation &#8594;</a>');
       }
     });
     if ($('tPt').checked) lObs.addTo(map);
@@ -648,30 +621,30 @@ function analyze() {
     if (lHeat) map.removeLayer(lHeat);
     lHeat = L.heatLayer(
       curObs.features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0], 0.6]),
-      { radius: 22, blur: 16, maxZoom: 14, gradient: { 0.15:'#151726', 0.35:'#384898', 0.55:'#7848a8', 0.75:'#b83868', 1:'#d04030' } }
+      { radius: 22, blur: 16, maxZoom: 14, gradient: { 0.15:'#092018', 0.35:'#325f5a', 0.55:'#37887f', 0.75:'#86593c', 1:'#6c391e' } }
     );
     if ($('tHt').checked) lHeat.addTo(map);
 
-    // Results sidebar
+    // Results
     const topW = [...wsGJ.features].filter(f => f.properties._oc > 0).sort((a,b) => b.properties._oc - a.properties._oc).slice(0, 7);
     const mW = topW[0]?.properties._oc || 1;
 
     let h = '<div class="rs"><h4>Top Watershed</h4>';
     if (topWS && topN > 0) {
-      const safeName = topWS.properties.name.replace(/'/g, "\\'");
-      h += '<div class="hero-card" onclick="document.dispatchEvent(new CustomEvent(\'wsClick\',{detail:\''+safeName+'\'}))">' +
+      const sn = topWS.properties.name.replace(/'/g, "\\'");
+      h += '<div class="hero-card" onclick="document.dispatchEvent(new CustomEvent(\'wsClick\',{detail:\''+sn+'\'}))">' +
            '<div class="hero-name">'+topWS.properties.name+'</div>' +
            '<div class="hero-sub">'+topN+' observations &middot; '+topWS.properties._od+'/km&sup2;</div>' +
            '<div class="hero-hint">Click to view trails &#8594;</div></div>';
     }
-    h += '<h4 style="margin-top:14px">Watersheds with Sightings</h4>';
-    h += '<div style="font-size:.68rem;color:var(--text3);margin-bottom:8px;font-style:italic">Click any to see trails</div>';
+    h += '<h4 style="margin-top:16px">Watersheds with Sightings</h4>';
+    h += '<div style="font-size:.82rem;color:var(--text3);margin-bottom:10px;font-style:italic">Click any to see trails</div>';
     topW.forEach(f => {
       const pct = (f.properties._oc / mW * 100).toFixed(0);
-      const safeName = f.properties.name.replace(/'/g, "\\'");
-      h += '<div class="rr" onclick="document.dispatchEvent(new CustomEvent(\'wsClick\',{detail:\''+safeName+'\'}))">' +
+      const sn = f.properties.name.replace(/'/g, "\\'");
+      h += '<div class="rr" onclick="document.dispatchEvent(new CustomEvent(\'wsClick\',{detail:\''+sn+'\'}))">' +
            '<span class="rn">'+(f.properties._top?'&#11045; ':'')+f.properties.name+'</span><span class="rv">'+f.properties._oc+'</span></div>' +
-           '<div class="rb"><div class="rb-f" style="width:'+pct+'%;background:'+(f.properties._top?'var(--crimson)':'var(--mist)')+'"></div></div>';
+           '<div class="rb"><div class="rb-f" style="width:'+pct+'%;background:'+(f.properties._top?'#37887f':'#404038')+'"></div></div>';
     });
     h += '</div>';
 
@@ -692,16 +665,15 @@ leg.onAdd = function() {
   const d = L.DomUtil.create('div', 'legend');
   d.innerHTML =
     '<div class="legend-t">Observation Density</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#28385a"></span>Low</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#7848a8"></span>Medium</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#b83868"></span>High</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#d04030"></span>Very High</div>' +
-    '<div class="legend-t" style="margin-top:8px">Trails</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#e0c870"></span>Trail</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#daa520"></span>Near observations</div>' +
-    '<div class="legend-t" style="margin-top:8px">Points</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#85bb40;border-radius:50%"></span>iNaturalist</div>' +
-    '<div class="legend-r"><span class="legend-s" style="background:#5ca0e0;border-radius:50%"></span>eBird</div>';
+    '<div class="legend-r"><span class="legend-s" style="background:rgba(55,136,127,0.12)"></span>Low</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:rgba(55,136,127,0.22)"></span>Medium</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:rgba(134,89,60,0.30)"></span>High</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:rgba(108,57,30,0.55)"></span>Very High</div>' +
+    '<div class="legend-t" style="margin-top:10px">Trails</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#689f99"></span>Trail</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#86593c"></span>Near observations</div>' +
+    '<div class="legend-t" style="margin-top:10px">Points</div>' +
+    '<div class="legend-r"><span class="legend-s" style="background:#85bb40;border-radius:50%"></span>iNaturalist</div>';
   return d;
 };
 leg.addTo(map);
@@ -710,8 +682,6 @@ leg.addTo(map);
 $('tWS').addEventListener('change', () => { if (!lWS) return; $('tWS').checked ? lWS.addTo(map) : map.removeLayer(lWS); });
 $('tPt').addEventListener('change', () => { if (!lObs) return; $('tPt').checked ? lObs.addTo(map) : map.removeLayer(lObs); });
 $('tHt').addEventListener('change', () => { if (!lHeat) return; $('tHt').checked ? lHeat.addTo(map) : map.removeLayer(lHeat); });
-$('tINat').addEventListener('change', () => { if (curSp) pick(curSp); });
-$('tEB').addEventListener('change', () => { if (curSp) pick(curSp); });
 
 console.log('🌿 NH Biodiversity Explorer ready');
 })();
