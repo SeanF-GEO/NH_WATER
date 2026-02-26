@@ -52,7 +52,7 @@ const DataLoader = (() => {
    */
   async function loadAllTrails() {
     const promises = TRAIL_FILES.map(filename => {
-      const path = `data/trails_geojson/${filename}`;
+      const path = `data/${filename}`;
       return loadGeoJSON(path).then(geojson => {
         if (!geojson) return [];
 
