@@ -545,7 +545,7 @@ async function drillIntoWatershed(wsName) {
     pane: 'trailPane',
     style: { color: '#8b5cf6', weight: 2.5, opacity: .6 },
     onEachFeature: (f, ly) => {
-      const name = f.properties.trailname || 'Trail';
+      const name = f.properties.trailsys || 'Trail';
       const mi = f.properties.miles ? ((+f.properties.miles).toFixed(1) + ' mi') : '';
       const co = f.properties.community || '';
       const url = f.properties.mapurl ? '<br/><a href="' + f.properties.mapurl + '" target="_blank">Trail info &#8594;</a>' : '';
