@@ -404,7 +404,7 @@ async function addSpecies(sp){
     entry.totalTrue=feats.length;   // actual mappable points
     console.log(sp.common+':',feats.length,'mapped of',entry.totalAPI,'total');
   }catch(e){console.error(e)}
-  rebuildPoints();hL();
+  rebuildPoints();renderBadges();hL();
 }
 
 function removeSpecies(spId){
