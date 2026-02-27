@@ -382,11 +382,14 @@ async function addSpecies(sp){
   species.push(entry);renderBadges();
   sL('Fetching '+sp.common+' observations…');
   try{
-    let all=[];
-    for(let pg=1;pg<=5;pg++){
+    let all=[],pg=1;
+    while(true){
       const d=await(await fetch(INAT+'/observations?taxon_id='+sp.id+'&swlat='+BBOX.swlat+'&swlng='+BBOX.swlng+'&nelat='+BBOX.nelat+'&nelng='+BBOX.nelng+'&quality_grade=research,needs_id&per_page=200&page='+pg+'&order=desc&order_by=observed_on')).json();
       if(pg===1) entry.totalTrue=d.total_results||0;
-      const r=d.results||[];all=all.concat(r);if(r.length<200)break;
+      const r=d.results||[];all=all.concat(r);
+      sL('Fetching '+sp.common+'… '+all.length+' / '+(entry.totalTrue||'?'));
+      if(r.length<200||pg>=50)break;
+      pg++;
     }
     const feats=[];
     all.filter(o=>o.geojson).forEach(o=>{
