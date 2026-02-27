@@ -32,9 +32,10 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
 .sb-hd{padding:34px 30px 28px;border-bottom:1px solid var(--bdr2);position:relative;overflow:hidden}
 .sb-hd::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 90%,rgba(0,232,180,.06),transparent 50%),radial-gradient(ellipse at 80% 10%,rgba(139,92,246,.06),transparent 50%);pointer-events:none}
 .sb-hd::after{content:'';position:absolute;bottom:0;left:30px;right:30px;height:1px;background:linear-gradient(90deg,transparent,var(--neon-dim),transparent);opacity:.3}
-.hd-eye{font-family:var(--fb);font-size:.78rem;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--neon);margin-bottom:10px;position:relative}
-.hd-t{font-family:var(--fd);font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--frost);position:relative;text-shadow:0 0 40px rgba(0,232,180,.08)}
-.hd-s{font-family:var(--fb);font-size:1.2rem;font-weight:300;color:var(--silver);margin-top:6px;position:relative;letter-spacing:.05em}
+.hd-eye{font-family:var(--fb);font-size:.92rem;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--neon);margin-bottom:10px;position:relative}
+.hd-t{font-family:var(--fd);font-size:2.4rem;font-weight:700;line-height:1.1;color:var(--frost);position:relative;text-shadow:0 0 40px rgba(0,232,180,.08)}
+.hd-s{font-family:var(--fb);font-size:1.35rem;font-weight:300;color:var(--silver);margin-top:6px;position:relative;letter-spacing:.05em}
+.hd-disc{font-family:var(--fb);font-size:1.15rem;font-weight:400;color:var(--ash);margin-top:14px;position:relative;line-height:1.5;padding:12px 16px;background:rgba(0,232,180,.03);border:1px solid var(--bdr);border-radius:var(--rad)}
 .pnl{padding:24px 30px;border-bottom:1px solid var(--bdr)}
 .pnl-lb{display:flex;align-items:center;gap:12px;font-size:1.1rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);margin-bottom:16px}
 .sn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--silver);border:1px solid var(--bdr2);background:var(--shade)}
@@ -139,6 +140,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
     <div class="hd-eye">New Hampshire &amp; Vermont</div>
     <h1 class="hd-t">Biodiversity Explorer</h1>
     <p class="hd-s">Watersheds, Wildlife &amp; Trails</p>
+    <p class="hd-disc">Data sourced from <a href="https://www.inaturalist.org" target="_blank" style="color:var(--neon);text-decoration:none">iNaturalist</a>. Only observations with public coordinates are displayed. Some records may be obscured or private and are not shown.</p>
   </div>
   <div class="pnl">
     <label class="pnl-lb"><span class="sn on">1</span>Find Species</label>
@@ -398,7 +400,9 @@ async function addSpecies(sp){
           photo:o.photos?.[0]?.url?.replace('square','small')||'',uri:o.uri||'https://www.inaturalist.org/observations/'+o.id,_color:color,_spCommon:sp.common}});
     });
     entry.obs={type:'FeatureCollection',features:feats};
-    console.log(sp.common+':',feats.length,'observations');
+    entry.totalAPI=entry.totalTrue; // total from API (includes non-mappable)
+    entry.totalTrue=feats.length;   // actual mappable points
+    console.log(sp.common+':',feats.length,'mapped of',entry.totalAPI,'total');
   }catch(e){console.error(e)}
   rebuildPoints();hL();
 }
@@ -415,8 +419,8 @@ function removeSpecies(spId){
 function renderBadges(){
   const bl=$('badgeList');let html='';
   species.forEach(s=>{
-    const shown=s.obs.features.length,total=s.totalTrue||shown;
-    const countTxt=shown<total?(shown.toLocaleString()+' of '+total.toLocaleString()+' obs'):(total.toLocaleString()+' obs');
+    const mapped=s.totalTrue||0;
+    const countTxt=mapped.toLocaleString()+' obs mapped';
     html+='<div class="badge" style="border-color:'+s.color+'30">'+'<div class="b-dot" style="color:'+s.color+';background:'+s.color+'"></div>'+(s.sp.icon?'<img class="b-img" src="'+s.sp.icon+'" alt=""/>':'')+'<div class="b-txt"><div class="b-c" style="color:'+s.color+'">'+s.sp.common+'</div><div class="b-s">'+s.sp.sci+' &middot; '+countTxt+'</div></div>'+'<button class="b-x" onclick="window._removeSp(\''+s.sp.id+'\')">&times;</button></div>';
   });
   if(species.length>=3)html+='<div class="badge-full">Maximum 3 species reached</div>';
