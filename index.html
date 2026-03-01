@@ -35,7 +35,24 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
 .hd-eye{font-family:var(--fb);font-size:.92rem;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--neon);margin-bottom:10px;position:relative}
 .hd-t{font-family:var(--fd);font-size:2.4rem;font-weight:700;line-height:1.1;color:var(--frost);position:relative;text-shadow:0 0 40px rgba(0,232,180,.08)}
 .hd-s{font-family:var(--fb);font-size:1.35rem;font-weight:300;color:var(--silver);margin-top:6px;position:relative;letter-spacing:.05em}
-.hd-disc{font-family:var(--fb);font-size:1.15rem;font-weight:400;color:var(--ash);margin-top:14px;position:relative;line-height:1.5;padding:12px 16px;background:rgba(0,232,180,.03);border:1px solid var(--bdr);border-radius:var(--rad)}
+.hd-disc{font-family:var(--fb);font-size:1.1rem;font-weight:400;color:var(--silver);margin-top:14px;position:relative;line-height:1.6}
+.about-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--bdr2);border-radius:var(--rad);color:var(--neon);font-family:var(--fb);font-size:1.05rem;font-weight:600;cursor:pointer;padding:8px 16px;margin-top:10px;transition:all .2s;letter-spacing:.03em}
+.about-btn:hover{border-color:var(--neon);background:rgba(0,232,180,.04)}
+.about-btn svg{transition:transform .25s var(--ease)}
+.about-btn.open svg{transform:rotate(180deg)}
+.about-body{max-height:0;overflow:hidden;transition:max-height .4s var(--ease);margin-top:0}
+.about-body.open{max-height:800px;margin-top:12px}
+.about-section{padding:14px 16px;background:rgba(0,232,180,.03);border:1px solid var(--bdr);border-radius:var(--rad);margin-bottom:10px}
+.about-section:last-child{margin-bottom:0}
+.about-section h6{font-family:var(--fd);font-size:1.1rem;font-weight:600;color:var(--frost);margin-bottom:6px}
+.about-section p{font-size:1.05rem;color:var(--silver);line-height:1.55;font-weight:300}
+.about-section a{color:var(--neon);text-decoration:none;font-weight:500}
+.about-section a:hover{text-decoration:underline}
+.ws-res-toggle{display:flex;gap:0;border-radius:var(--rad);overflow:hidden;border:1px solid var(--bdr2);margin-bottom:12px}
+.ws-res-btn{flex:1;padding:11px 0;text-align:center;font-family:var(--fb);font-size:1.1rem;font-weight:600;letter-spacing:.03em;cursor:pointer;border:none;transition:all .25s;background:var(--shade);color:var(--ash)}
+.ws-res-btn:hover{color:var(--silver);background:var(--murk)}
+.ws-res-btn.active{background:linear-gradient(135deg,rgba(0,232,180,.12),rgba(139,92,246,.08));color:var(--neon);box-shadow:inset 0 -2px 0 var(--neon)}
+.ws-res-label{font-size:.95rem;color:var(--ash);margin-bottom:10px;font-weight:400;text-align:center}
 .pnl{padding:24px 30px;border-bottom:1px solid var(--bdr)}
 .pnl-lb{display:flex;align-items:center;gap:12px;font-size:1.1rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);margin-bottom:16px}
 .sn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--silver);border:1px solid var(--bdr2);background:var(--shade)}
@@ -140,7 +157,27 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
     <div class="hd-eye">New Hampshire &amp; Vermont</div>
     <h1 class="hd-t">Biodiversity Explorer</h1>
     <p class="hd-s">Watersheds, Wildlife &amp; Trails</p>
-    <p class="hd-disc">Data sourced from <a href="https://www.inaturalist.org" target="_blank" style="color:var(--neon);text-decoration:none">iNaturalist</a>. Only observations with public coordinates are displayed. Some records may be obscured or private and are not shown.</p>
+    <div class="hd-disc">
+      Only observations with public coordinates are shown.
+      <button class="about-btn" id="aboutBtn" onclick="this.classList.toggle('open');document.getElementById('aboutBody').classList.toggle('open')">
+        Learn more
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="about-body" id="aboutBody">
+        <div class="about-section">
+          <h6>Wildlife Observations</h6>
+          <p>Species data comes from <a href="https://www.inaturalist.org" target="_blank">iNaturalist</a>, a global community science platform where people photograph and identify organisms. Observations go through community verification, but some may be misidentified. Records with obscured or private coordinates are excluded from this map, so the true count for sensitive species may be higher than shown.</p>
+        </div>
+        <div class="about-section">
+          <h6>Watershed Boundaries</h6>
+          <p>Watersheds are land areas that drain to a common waterway. This map uses the USGS Watershed Boundary Dataset at two scales: <strong style="color:var(--frost)">Regions</strong> show large drainage basins (like the Merrimack or Connecticut River), while <strong style="color:var(--frost)">Sub-basins</strong> break those into smaller, more detailed catchments. Use the toggle in the Layers panel to switch between them.</p>
+        </div>
+        <div class="about-section">
+          <h6>Trail Data</h6>
+          <p>Trails are loaded from <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a> via the Overpass API. Coverage depends on volunteer mapping — some trails may be missing or misaligned. Click a watershed to load its trails, including footpaths, hiking routes, and tracks.</p>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="pnl">
     <label class="pnl-lb"><span class="sn on">1</span>Find Species</label>
@@ -154,6 +191,11 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
   </div>
   <div class="pnl">
     <label class="pnl-lb"><span class="sn">2</span>Layers</label>
+    <div class="ws-res-label">Watershed Detail</div>
+    <div class="ws-res-toggle">
+      <button class="ws-res-btn active" id="btnRegion">Regions</button>
+      <button class="ws-res-btn" id="btnSubbasin">Sub-basins</button>
+    </div>
     <div class="tg">
       <label class="tl"><input type="checkbox" id="tWS" checked/><span class="tt"></span><span class="tl-lb">Watersheds</span></label>
       <label class="tl"><input type="checkbox" id="tPt" checked/><span class="tt"></span><span class="tl-lb">Observation Points</span></label>
@@ -336,22 +378,32 @@ out geom;`;
 }
 
 sL('Loading watersheds…');
-const wsParts=await Promise.all([
+const [wsGJ_8_raw, stGJ_raw, ...ws12Parts] = await Promise.all([
+  fj('nh_vt_8.geojson'),
+  fj('State.geojson'),
   fj('nh_vt_part_1.geojson'),fj('nh_vt_part_2.geojson'),fj('nh_vt_part_3.geojson'),
   fj('nh_vt_part_4.geojson'),fj('nh_vt_part_5.geojson')
 ]);
-const wsGJ={type:'FeatureCollection',features:[]};
-wsParts.forEach(p=>{if(p){const rp=ensureWGS84(p);wsGJ.features.push(...(rp.features||[]))}});
-const stGJ=ensureWGS84(await fj('State.geojson'));
-if(!wsGJ.features.length){hL();alert('Could not load watershed files');return}
-console.log('Loaded',wsGJ.features.length,'watersheds');
+const wsGJ_8=wsGJ_8_raw?ensureWGS84(wsGJ_8_raw):{type:'FeatureCollection',features:[]};
+const wsGJ_12={type:'FeatureCollection',features:[]};
+ws12Parts.forEach(p=>{if(p){const rp=ensureWGS84(p);wsGJ_12.features.push(...(rp.features||[]))}});
+const stGJ=stGJ_raw?ensureWGS84(stGJ_raw):null;
+if(!wsGJ_8.features.length&&!wsGJ_12.features.length){hL();alert('Could not load watershed files');return}
+console.log('Loaded',wsGJ_8.features.length,'HUC8 +',wsGJ_12.features.length,'HUC12 watersheds');
+
+let wsGJ=wsGJ_8; // active dataset — start with Regions
+let wsResolution='region'; // 'region' or 'subbasin'
 
 const map=L.map('map',{center:[43.8,-72.1],zoom:8,minZoom:7,maxZoom:18});
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO &copy; OSM',maxZoom:19}).addTo(map);
 if(stGJ)L.geoJSON(stGJ,{style:{color:'#2a3358',weight:1.5,opacity:.35,dashArray:'8,5',fill:false},interactive:false}).addTo(map);
 
 const wcm={};
-wsGJ.features.forEach((f,i)=>{wcm[f.properties.name]=WC[i%WC.length]});
+function buildColorMap(){
+  Object.keys(wcm).forEach(k=>delete wcm[k]);
+  wsGJ.features.forEach((f,i)=>{wcm[f.properties.name]=WC[i%WC.length]});
+}
+buildColorMap();
 map.createPane('wsPane');map.getPane('wsPane').style.zIndex=400;
 map.createPane('trailPane');map.getPane('trailPane').style.zIndex=450;
 map.createPane('pointPane');map.getPane('pointPane').style.zIndex=500;
@@ -388,10 +440,10 @@ function showAllWatersheds(fitBounds){
   $('trailInfo').classList.remove('vis');
   lWS=L.geoJSON(wsGJ,{
     pane:'wsPane',
-    style:f=>{const c=wcm[f.properties.name]||'#00b48c';return{fillColor:'transparent',fillOpacity:0,color:c,weight:3.5,opacity:.85}},
+    style:f=>{const c=wcm[f.properties.name]||'#00b48c';const w=wsResolution==='subbasin'?1.8:3.5;return{fillColor:'transparent',fillOpacity:0,color:c,weight:w,opacity:.85}},
     onEachFeature:(f,ly)=>{
       ly.on({
-        mouseover:e=>{e.target.setStyle({weight:5.5,opacity:1,color:'#00ffc8'});e.target.bringToFront()},
+        mouseover:e=>{e.target.setStyle({weight:wsResolution==='subbasin'?3.5:5.5,opacity:1,color:'#00ffc8'});e.target.bringToFront()},
         mouseout:e=>lWS.resetStyle(e.target),
         click:()=>drillIntoWatershed(f.properties.name)
       });
@@ -596,6 +648,28 @@ leg.addTo(map);
 
 $('tWS').addEventListener('change',()=>{if(!lWS)return;$('tWS').checked?lWS.addTo(map):map.removeLayer(lWS)});
 $('tPt').addEventListener('change',()=>{species.forEach(s=>{if(!s.layer)return;$('tPt').checked?s.layer.addTo(map):map.removeLayer(s.layer)})});
+
+/* ═══ WATERSHED RESOLUTION TOGGLE ═══ */
+function switchResolution(res){
+  if(res===wsResolution)return;
+  wsResolution=res;
+  wsGJ=(res==='region')?wsGJ_8:wsGJ_12;
+  $('btnRegion').classList.toggle('active',res==='region');
+  $('btnSubbasin').classList.toggle('active',res==='subbasin');
+  buildColorMap();
+  // Re-count observations against new watershed set
+  if(species.length) countAllObsPerWatershed();
+  showAllWatersheds();
+  // Rebuild results sidebar
+  if(species.length){
+    buildResults();
+    $('sW').textContent=wsGJ.features.filter(f=>f.properties._oc>0).length;
+  }
+  sL(res==='region'?'Showing regions…':'Showing sub-basins…');
+  setTimeout(hL,400);
+}
+$('btnRegion').addEventListener('click',()=>switchResolution('region'));
+$('btnSubbasin').addEventListener('click',()=>switchResolution('subbasin'));
 
 console.log('🌿 NH Biodiversity Explorer ready');
 })();
