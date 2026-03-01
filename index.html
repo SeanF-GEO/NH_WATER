@@ -8,6 +8,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -120,7 +122,18 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
 .trail-info .trail-count{font-size:1.1rem;color:var(--silver);margin-bottom:10px;font-weight:400}
 .sb-ft{margin-top:auto;padding:24px 30px;border-top:1px solid var(--bdr2);background:var(--abyss);position:relative}
 .sb-ft::before{content:'';position:absolute;top:0;left:30px;right:30px;height:1px;background:linear-gradient(90deg,transparent,var(--violet-dim),transparent);opacity:.2}
-.st-r{display:flex;justify-content:space-between}
+.st-r{display:flex;justify-content:space-between;margin-bottom:16px}
+.export-wrap{position:relative}
+.export-btn{width:100%;padding:12px 0;background:linear-gradient(135deg,rgba(0,232,180,.1),rgba(139,92,246,.08));border:1px solid var(--neon-dim);border-radius:var(--rad);color:var(--neon);font-family:var(--fb);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;gap:10px}
+.export-btn:hover{background:linear-gradient(135deg,rgba(0,232,180,.18),rgba(139,92,246,.12));box-shadow:0 0 20px rgba(0,232,180,.1)}
+.export-btn:active{transform:scale(.98)}
+.export-btn.busy{pointer-events:none;opacity:.6}
+.export-menu{position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--shade);border:1px solid var(--bdr2);border-radius:var(--rad);box-shadow:0 -12px 40px rgba(0,0,0,.5);display:none;overflow:hidden;z-index:10}
+.export-menu.open{display:block}
+.export-opt{padding:14px 20px;cursor:pointer;font-family:var(--fb);font-size:1.15rem;font-weight:500;color:var(--text2);border-bottom:1px solid var(--bdr);transition:background .12s;display:flex;align-items:center;gap:12px}
+.export-opt:last-child{border-bottom:none}
+.export-opt:hover{background:var(--murk);color:var(--frost)}
+.export-opt .fmt{font-weight:700;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--neon);background:rgba(0,232,180,.08);padding:3px 8px;border-radius:3px;border:1px solid rgba(0,232,180,.15)}
 .stat{text-align:center}
 .st-v{display:block;font-family:var(--fd);font-size:1.8rem;font-weight:700;color:var(--ember);line-height:1.2}
 .st-l{font-size:.92rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);font-weight:600}
@@ -215,6 +228,17 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
       <div class="stat"><span class="st-v" id="sO">&mdash;</span><span class="st-l">Observations</span></div>
       <div class="stat"><span class="st-v" id="sW">&mdash;</span><span class="st-l">Watersheds</span></div>
       <div class="stat"><span class="st-v" id="sT">&mdash;</span><span class="st-l">Trails</span></div>
+    </div>
+    <div class="export-wrap">
+      <div class="export-menu" id="exportMenu">
+        <div class="export-opt" data-fmt="png"><span class="fmt">PNG</span>High quality image</div>
+        <div class="export-opt" data-fmt="jpg"><span class="fmt">JPG</span>Smaller file size</div>
+        <div class="export-opt" data-fmt="pdf"><span class="fmt">PDF</span>Print-ready document</div>
+      </div>
+      <button class="export-btn" id="exportBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Map
+      </button>
     </div>
   </div>
 </aside>
@@ -670,6 +694,120 @@ function switchResolution(res){
 }
 $('btnRegion').addEventListener('click',()=>switchResolution('region'));
 $('btnSubbasin').addEventListener('click',()=>switchResolution('subbasin'));
+
+/* ═══ MAP EXPORT ═══ */
+const exportBtn=$('exportBtn'),exportMenu=$('exportMenu');
+exportBtn.addEventListener('click',()=>exportMenu.classList.toggle('open'));
+document.addEventListener('click',e=>{if(!e.target.closest('.export-wrap'))exportMenu.classList.remove('open')});
+
+document.querySelectorAll('.export-opt').forEach(opt=>{
+  opt.addEventListener('click',async()=>{
+    const fmt=opt.dataset.fmt;
+    exportMenu.classList.remove('open');
+    exportBtn.classList.add('busy');
+    exportBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" opacity=".3"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur=".8s" repeatCount="indefinite"/></path></svg> Capturing…';
+
+    try{
+      // Capture the map container
+      const mapEl=document.getElementById('map');
+      const canvas=await html2canvas(mapEl,{
+        useCORS:true,
+        allowTaint:true,
+        backgroundColor:'#05060d',
+        scale:2, // 2x for crisp output
+        logging:false,
+        // Ignore Leaflet controls for cleaner export
+        ignoreElements:el=>el.classList?.contains('leaflet-control-attribution')
+      });
+
+      // Add a title bar and legend overlay to the canvas
+      const out=document.createElement('canvas');
+      const pad=60;
+      out.width=canvas.width;
+      out.height=canvas.height+pad;
+      const ctx=out.getContext('2d');
+
+      // Dark background header
+      ctx.fillStyle='#05060d';
+      ctx.fillRect(0,0,out.width,pad);
+
+      // Title text
+      ctx.fillStyle='#e2e8f4';
+      ctx.font='bold '+Math.round(22*(out.width/1200))+'px Rajdhani, sans-serif';
+      ctx.fillText('NH & VT Biodiversity Explorer',20,pad*0.55);
+
+      // Subtitle — species + date
+      ctx.fillStyle='#8892b0';
+      ctx.font=Math.round(14*(out.width/1200))+'px Rajdhani, sans-serif';
+      const spNames=species.map(s=>s.sp.common).join(', ')||'No species selected';
+      const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+      ctx.fillText(spNames+' — '+dateStr,20,pad*0.88);
+
+      // Neon accent line
+      ctx.strokeStyle='#00e8b4';
+      ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(0,pad-1);ctx.lineTo(out.width,pad-1);ctx.stroke();
+
+      // Draw the map capture below the header
+      ctx.drawImage(canvas,0,pad);
+
+      // Species legend on the map area
+      if(species.length){
+        const lx=out.width-260,ly=pad+20,lw=240;
+        const lh=species.length*32+24;
+        ctx.fillStyle='rgba(21,26,50,0.92)';
+        ctx.strokeStyle='rgba(42,51,88,0.8)';
+        ctx.lineWidth=1;
+        roundRect(ctx,lx,ly,lw,lh,8);
+        ctx.fill();ctx.stroke();
+        species.forEach((s,i)=>{
+          const y=ly+22+i*32;
+          ctx.fillStyle=s.color;
+          ctx.beginPath();ctx.arc(lx+18,y,6,0,Math.PI*2);ctx.fill();
+          ctx.fillStyle='#e2e8f4';
+          ctx.font='500 '+Math.round(13*(out.width/1200))+'px Rajdhani, sans-serif';
+          ctx.fillText(s.sp.common+' ('+s.totalTrue+')',lx+34,y+5);
+        });
+      }
+
+      if(fmt==='png'){
+        downloadCanvas(out,'biodiversity-map.png','image/png');
+      }else if(fmt==='jpg'){
+        downloadCanvas(out,'biodiversity-map.jpg','image/jpeg');
+      }else if(fmt==='pdf'){
+        const {jsPDF}=window.jspdf;
+        const imgData=out.toDataURL('image/jpeg',0.95);
+        const ratio=out.height/out.width;
+        const pdf=new jsPDF({orientation:ratio>0.75?'portrait':'landscape',unit:'mm'});
+        const pW=pdf.internal.pageSize.getWidth();
+        const pH=pW*ratio;
+        pdf.addImage(imgData,'JPEG',0,0,pW,pH);
+        pdf.save('biodiversity-map.pdf');
+      }
+    }catch(e){
+      console.error('Export failed:',e);
+      alert('Export failed — some map tiles may block capture. Try zooming in first.');
+    }
+
+    exportBtn.classList.remove('busy');
+    exportBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export Map';
+  });
+});
+
+function downloadCanvas(canvas,filename,mime){
+  const link=document.createElement('a');
+  link.download=filename;
+  link.href=canvas.toDataURL(mime,0.95);
+  link.click();
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
 
 console.log('🌿 NH Biodiversity Explorer ready');
 })();
