@@ -419,7 +419,7 @@ let wsGJ=wsGJ_8; // active dataset — start with Regions
 let wsResolution='region'; // 'region' or 'subbasin'
 
 const map=L.map('map',{center:[43.8,-72.1],zoom:8,minZoom:7,maxZoom:18});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO &copy; OSM',maxZoom:19}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO &copy; OSM',maxZoom:19,crossOrigin:'anonymous'}).addTo(map);
 if(stGJ)L.geoJSON(stGJ,{style:{color:'#2a3358',weight:1.5,opacity:.35,dashArray:'8,5',fill:false},interactive:false}).addTo(map);
 
 const wcm={};
@@ -723,7 +723,7 @@ document.querySelectorAll('.export-opt').forEach(opt=>{
 
       const canvas=await html2canvas(mapEl,{
         useCORS:true,
-        allowTaint:true,
+        allowTaint:false,
         backgroundColor:'#05060d',
         scale:2,
         logging:false,
@@ -733,6 +733,7 @@ document.querySelectorAll('.export-opt').forEach(opt=>{
         y:0,
         width:mapEl.offsetWidth,
         height:mapEl.offsetHeight,
+        imageTimeout:15000,
         ignoreElements:el=>el.classList?.contains('leaflet-control-attribution')
       });
 
