@@ -187,25 +187,6 @@ const BBOX={swlat:42.72,swlng:-73.44,nelat:45.31,nelng:-70.70};
 const INAT='https://api.inaturalist.org/v1';
 const SP_COLORS=['#00e8b4','#f97316','#e84393'];
 
-const TRAIL_FILES={
-  'Ammonoosuc River-Connecticut River':'Trails_Ammonoosuc_River_Connecticut_River.geojson',
-  'Ashuelot River-Connecticut River':'Trails_Ashuelot_River_Connecticut_River.geojson',
-  'Black River-Connecticut River':'Trails_Black_River_Connecticut_River.geojson',
-  'Contoocook River':'Trails_Contoocook_River.geojson',
-  'Headwaters Connecticut River':'Trails_Headwaters_Connecticut_River.geojson',
-  'Lower Androscoggin River':'Trails_Lower_Androscoggin_River.geojson',
-  'Merrimack River':'Trails_Merrimack_River.geojson',
-  'Millers River':'Trails_Millers_River.geojson',
-  'Nashua River':'Trails_Nashua_River.geojson',
-  'Pemigewasset River':'Trails_Pemigewasset_River.geojson',
-  'Piscataqua-Salmon Falls':'Trails_Piscataqua_Salmon_Falls.geojson',
-  'Saco River':'Trails_Saco_River.geojson',
-  'Upper Androscoggin River':'Trails_Upper_Androscoggin_River.geojson',
-  'Waits River-Connecticut River':'Trails_Waits_River_Connecticut_River.geojson',
-  'West River-Connecticut River':'Trails_West_River_Connecticut_River.geojson',
-  'Winnipesaukee River':'Trails_Winnipesaukee_River.geojson'
-};
-
 const WC=[
   '#ff4444','#ff8c1a','#ffd700','#33d17a','#3daee9',
   '#b366ff','#ff6b6b','#ffaa33','#2de6a3','#9d6fff',
@@ -237,14 +218,121 @@ function ensureWGS84(gj){
   delete out.crs;return out;
 }
 
+const OVERPASS='https://overpass-api.de/api/interpreter';
+
 const trailCache={};
+
+/* Convert Overpass JSON to GeoJSON */
+function overpassToGeoJSON(data){
+  const features=[];
+  (data.elements||[]).forEach(el=>{
+    if(el.type==='way'&&el.geometry){
+      const coords=el.geometry.map(n=>[n.lon,n.lat]);
+      if(coords.length<2)return;
+      features.push({
+        type:'Feature',
+        geometry:{type:'LineString',coordinates:coords},
+        properties:{
+          osm_id:el.id,
+          trailname:el.tags?.name||'Unnamed trail',
+          highway:el.tags?.highway||'',
+          route:el.tags?.route||'',
+          surface:el.tags?.surface||'',
+          sac_scale:el.tags?.sac_scale||'',
+          access:el.tags?.access||'',
+          operator:el.tags?.operator||'',
+          network:el.tags?.network||''
+        }
+      });
+    }
+    if(el.type==='relation'&&el.members){
+      // Hiking routes — assemble member ways
+      const ways=el.members.filter(m=>m.type==='way'&&m.geometry);
+      ways.forEach(w=>{
+        const coords=w.geometry.map(n=>[n.lon,n.lat]);
+        if(coords.length<2)return;
+        features.push({
+          type:'Feature',
+          geometry:{type:'LineString',coordinates:coords},
+          properties:{
+            osm_id:el.id,
+            trailname:el.tags?.name||'Unnamed route',
+            trailsys:el.tags?.network||'',
+            highway:w.role||'',
+            route:el.tags?.route||'hiking',
+            surface:'',
+            sac_scale:el.tags?.sac_scale||'',
+            access:'',
+            operator:el.tags?.operator||'',
+            network:el.tags?.network||''
+          }
+        });
+      });
+    }
+  });
+  return{type:'FeatureCollection',features};
+}
+
+/* Fetch trails from Overpass for a watershed's bounding box */
 async function loadTrails(wsName){
   if(trailCache[wsName])return trailCache[wsName];
-  const file=TRAIL_FILES[wsName];if(!file)return null;
-  const raw=await fj(file);if(!raw)return null;
-  const gj=ensureWGS84(raw);
-  gj.features.forEach(f=>{f.properties=f.properties||{};if(!f.properties.trailname)f.properties.trailname=f.properties.TRAIL_NAME||f.properties.Name||'Trail'});
-  trailCache[wsName]=gj;return gj;
+
+  const feat=wsGJ.features.find(f=>f.properties.name===wsName);
+  if(!feat)return null;
+
+  // Get bounding box from watershed geometry
+  const bbox=turf.bbox(feat); // [west, south, east, north]
+  const bboxStr=bbox[1]+','+bbox[0]+','+bbox[3]+','+bbox[2]; // Overpass wants S,W,N,E
+
+  const query=`[out:json][timeout:30];
+(
+  way["highway"="path"](${bboxStr});
+  way["highway"="footway"](${bboxStr});
+  way["highway"="track"](${bboxStr});
+  relation["route"="hiking"](${bboxStr});
+);
+out geom;`;
+
+  try{
+    const resp=await fetch(OVERPASS,{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'data='+encodeURIComponent(query)
+    });
+    if(!resp.ok)throw new Error('Overpass HTTP '+resp.status);
+    const data=await resp.json();
+    const gj=overpassToGeoJSON(data);
+
+    // Filter trails to only those actually intersecting the watershed polygon
+    const wsPoly=turf.feature(feat.geometry);
+    gj.features=gj.features.filter(f=>{
+      try{
+        // Check if any point of the trail is inside the watershed
+        const coords=f.geometry.coordinates;
+        for(let i=0;i<coords.length;i+=Math.max(1,Math.floor(coords.length/10))){
+          if(turf.booleanPointInPolygon(turf.point(coords[i]),wsPoly))return true;
+        }
+        // Also check first and last point
+        if(turf.booleanPointInPolygon(turf.point(coords[0]),wsPoly))return true;
+        if(turf.booleanPointInPolygon(turf.point(coords[coords.length-1]),wsPoly))return true;
+        return false;
+      }catch(e){return false}
+    });
+
+    // Deduplicate by osm_id
+    const seen=new Set();
+    gj.features=gj.features.filter(f=>{
+      const key=f.properties.osm_id+'_'+f.geometry.coordinates[0].join(',');
+      if(seen.has(key))return false;
+      seen.add(key);return true;
+    });
+
+    trailCache[wsName]=gj;
+    return gj;
+  }catch(e){
+    console.error('Overpass query failed for',wsName,e);
+    return{type:'FeatureCollection',features:[]};
+  }
 }
 
 sL('Loading watersheds…');
@@ -325,7 +413,7 @@ async function drillIntoWatershed(wsName){
   lWS.addTo(map);
   map.fitBounds(lWS.getBounds(),{padding:[50,50]});
   $('backBtn').classList.add('vis');
-  sL('Loading trails…');
+  sL('Querying OpenStreetMap trails…');
   const trailData=await loadTrails(wsName);
   hL();
   if(!trailData||!trailData.features.length){
@@ -335,16 +423,30 @@ async function drillIntoWatershed(wsName){
   lTr=L.geoJSON(trailData,{
     pane:'trailPane',style:{color:'#8b5cf6',weight:2.5,opacity:.6},
     onEachFeature:(f,ly)=>{
-      const p=f.properties,name=p.trailname||'Trail',sys=p.trailsys||'',mi=p.miles?((+p.miles).toFixed(1)+' mi'):'',co=p.community||'',url=p.mapurl?'<br/><a href="'+p.mapurl+'" target="_blank">Trail info &#8594;</a>':'';
+      const p=f.properties;
+      const name=p.trailname||'Unnamed trail';
+      const type=[p.highway,p.route].filter(Boolean).join(' · ')||'';
+      const surface=p.surface?('Surface: '+p.surface):'';
+      const difficulty=p.sac_scale?('Difficulty: '+p.sac_scale.replace(/_/g,' ')):'';
+      const net=p.network||p.trailsys||'';
+      const osmLink='<br/><a href="https://www.openstreetmap.org/way/'+p.osm_id+'" target="_blank">View on OSM &#8594;</a>';
       ly.on({mouseover:e=>{e.target.setStyle({weight:5,opacity:1,color:'#a78bfa'})},mouseout:e=>{lTr.resetStyle(e.target)},
-        click:()=>{let html='<strong>'+name+'</strong>';if(sys)html+='<br/><span style="color:#a78bfa;font-weight:500">'+sys+'</span>';if(co||mi)html+='<br/><span style="color:#8892b0">'+co+(co&&mi?' &middot; ':'')+mi+'</span>';html+=url;ly.bindPopup(html).openPopup()}
+        click:()=>{
+          let html='<strong>'+name+'</strong>';
+          if(net)html+='<br/><span style="color:#a78bfa;font-weight:500">'+net+'</span>';
+          if(type)html+='<br/><span style="color:#8892b0">'+type+'</span>';
+          if(surface)html+='<br/><span style="color:#8892b0">'+surface+'</span>';
+          if(difficulty)html+='<br/><span style="color:#8892b0">'+difficulty+'</span>';
+          html+=osmLink;
+          ly.bindPopup(html).openPopup();
+        }
       });
       ly.bindTooltip(name,{sticky:true,className:'trail-tip',direction:'top',offset:[0,-8]});
     }
   });
   lTr.addTo(map);
   $('trailTitle').textContent=wsName;
-  $('trailCount').textContent=trailData.features.length+' trails — hover or click for details';
+  $('trailCount').textContent=trailData.features.length+' trails from OpenStreetMap — hover or click for details';
   $('trailInfo').classList.add('vis');$('sT').textContent=trailData.features.length;
 }
 
