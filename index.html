@@ -8,7 +8,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -134,6 +133,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
 .export-opt:last-child{border-bottom:none}
 .export-opt:hover{background:var(--murk);color:var(--frost)}
 .export-opt .fmt{font-weight:700;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--neon);background:rgba(0,232,180,.08);padding:3px 8px;border-radius:3px;border:1px solid rgba(0,232,180,.15)}
+#map.draw-mode{cursor:crosshair!important}
+#map.draw-mode .leaflet-interactive{cursor:crosshair!important}
+.export-sel{position:absolute;border:2px dashed var(--neon);background:rgba(0,232,180,.08);z-index:9999;pointer-events:none;box-shadow:0 0 0 9999px rgba(5,6,13,.45)}
+.export-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:3000;background:var(--shade);border:1px solid var(--neon-dim);border-radius:var(--rad);padding:14px 28px;font-family:var(--fb);font-size:1.2rem;color:var(--frost);display:none;align-items:center;gap:14px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.export-toast.vis{display:flex}
+.export-toast .toast-cancel{background:none;border:1px solid var(--bdr2);border-radius:6px;color:var(--ash);cursor:pointer;font-family:var(--fb);font-size:1rem;padding:6px 14px;transition:all .15s}
+.export-toast .toast-cancel:hover{border-color:var(--blood);color:var(--blood)}
 .stat{text-align:center}
 .st-v{display:block;font-family:var(--fd);font-size:1.8rem;font-weight:700;color:var(--ember);line-height:1.2}
 .st-l{font-size:.92rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);font-weight:600}
@@ -243,6 +249,10 @@ html,body{height:100%;overflow:hidden;font-family:var(--fb);background:var(--voi
   </div>
 </aside>
 <div id="map"></div>
+<div id="exportToast" class="export-toast">
+  <span>&#10003; Draw a rectangle on the map to export</span>
+  <button class="toast-cancel" id="exportCancel">Cancel</button>
+</div>
 <div id="ld" class="ld"><div><div class="sp"></div><p class="lm" id="lmsg">Loading…</p></div></div>
 
 <script>
@@ -695,131 +705,289 @@ function switchResolution(res){
 $('btnRegion').addEventListener('click',()=>switchResolution('region'));
 $('btnSubbasin').addEventListener('click',()=>switchResolution('subbasin'));
 
-/* ═══ MAP EXPORT ═══ */
+/* ═══ MAP EXPORT — DRAW BOUNDING BOX + MANUAL TILE COMPOSITING ═══ */
 const exportBtn=$('exportBtn'),exportMenu=$('exportMenu');
+let drawFmt=null,drawActive=false,drawStart=null,selRect=null;
+
 exportBtn.addEventListener('click',()=>exportMenu.classList.toggle('open'));
 document.addEventListener('click',e=>{if(!e.target.closest('.export-wrap'))exportMenu.classList.remove('open')});
 
+// User picks a format → enter draw mode
 document.querySelectorAll('.export-opt').forEach(opt=>{
-  opt.addEventListener('click',async()=>{
-    const fmt=opt.dataset.fmt;
+  opt.addEventListener('click',()=>{
+    drawFmt=opt.dataset.fmt;
     exportMenu.classList.remove('open');
-    exportBtn.classList.add('busy');
-    exportBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" opacity=".3"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur=".8s" repeatCount="indefinite"/></path></svg> Capturing…';
-
-    try{
-      // Capture the map container
-      const mapEl=document.getElementById('map');
-
-      // html2canvas struggles with position:fixed — temporarily switch
-      var _origMapStyle=mapEl.style.cssText;
-      mapEl.style.position='absolute';
-      mapEl.style.left='0';
-      mapEl.style.top='0';
-      mapEl.style.right='auto';
-      mapEl.style.bottom='auto';
-      mapEl.style.width=mapEl.offsetWidth+'px';
-      mapEl.style.height=mapEl.offsetHeight+'px';
-
-      const canvas=await html2canvas(mapEl,{
-        useCORS:true,
-        allowTaint:false,
-        backgroundColor:'#05060d',
-        scale:2,
-        logging:false,
-        scrollX:0,
-        scrollY:0,
-        x:0,
-        y:0,
-        width:mapEl.offsetWidth,
-        height:mapEl.offsetHeight,
-        imageTimeout:15000,
-        ignoreElements:el=>el.classList?.contains('leaflet-control-attribution')
-      });
-
-      // Restore original positioning
-      mapEl.style.cssText=_origMapStyle;
-      map.invalidateSize();
-
-      // Add a title bar and legend overlay to the canvas
-      const out=document.createElement('canvas');
-      const pad=60;
-      out.width=canvas.width;
-      out.height=canvas.height+pad;
-      const ctx=out.getContext('2d');
-
-      // Dark background header
-      ctx.fillStyle='#05060d';
-      ctx.fillRect(0,0,out.width,pad);
-
-      // Title text
-      ctx.fillStyle='#e2e8f4';
-      ctx.font='bold '+Math.round(22*(out.width/1200))+'px Rajdhani, sans-serif';
-      ctx.fillText('NH & VT Biodiversity Explorer',20,pad*0.55);
-
-      // Subtitle — species + date
-      ctx.fillStyle='#8892b0';
-      ctx.font=Math.round(14*(out.width/1200))+'px Rajdhani, sans-serif';
-      const spNames=species.map(s=>s.sp.common).join(', ')||'No species selected';
-      const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-      ctx.fillText(spNames+' — '+dateStr,20,pad*0.88);
-
-      // Neon accent line
-      ctx.strokeStyle='#00e8b4';
-      ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(0,pad-1);ctx.lineTo(out.width,pad-1);ctx.stroke();
-
-      // Draw the map capture below the header
-      ctx.drawImage(canvas,0,pad);
-
-      // Species legend on the map area
-      if(species.length){
-        const lx=out.width-260,ly=pad+20,lw=240;
-        const lh=species.length*32+24;
-        ctx.fillStyle='rgba(21,26,50,0.92)';
-        ctx.strokeStyle='rgba(42,51,88,0.8)';
-        ctx.lineWidth=1;
-        roundRect(ctx,lx,ly,lw,lh,8);
-        ctx.fill();ctx.stroke();
-        species.forEach((s,i)=>{
-          const y=ly+22+i*32;
-          ctx.fillStyle=s.color;
-          ctx.beginPath();ctx.arc(lx+18,y,6,0,Math.PI*2);ctx.fill();
-          ctx.fillStyle='#e2e8f4';
-          ctx.font='500 '+Math.round(13*(out.width/1200))+'px Rajdhani, sans-serif';
-          ctx.fillText(s.sp.common+' ('+s.totalTrue+')',lx+34,y+5);
-        });
-      }
-
-      if(fmt==='png'){
-        downloadCanvas(out,'biodiversity-map.png','image/png');
-      }else if(fmt==='jpg'){
-        downloadCanvas(out,'biodiversity-map.jpg','image/jpeg');
-      }else if(fmt==='pdf'){
-        const {jsPDF}=window.jspdf;
-        const imgData=out.toDataURL('image/jpeg',0.95);
-        const ratio=out.height/out.width;
-        const pdf=new jsPDF({orientation:ratio>0.75?'portrait':'landscape',unit:'mm'});
-        const pW=pdf.internal.pageSize.getWidth();
-        const pH=pW*ratio;
-        pdf.addImage(imgData,'JPEG',0,0,pW,pH);
-        pdf.save('biodiversity-map.pdf');
-      }
-    }catch(e){
-      console.error('Export failed:',e);
-      if(_origMapStyle!==undefined){document.getElementById('map').style.cssText=_origMapStyle;map.invalidateSize()}
-      alert('Export failed — some map tiles may block capture. Try zooming in first.');
-    }
-
-    exportBtn.classList.remove('busy');
-    exportBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export Map';
+    enterDrawMode();
   });
 });
+
+function enterDrawMode(){
+  drawActive=true;
+  map.dragging.disable();
+  map.doubleClickZoom.disable();
+  map.scrollWheelZoom.disable();
+  map.boxZoom.disable();
+  document.getElementById('map').classList.add('draw-mode');
+  $('exportToast').classList.add('vis');
+}
+
+function exitDrawMode(){
+  drawActive=false;
+  map.dragging.enable();
+  map.doubleClickZoom.enable();
+  map.scrollWheelZoom.enable();
+  map.boxZoom.enable();
+  document.getElementById('map').classList.remove('draw-mode');
+  $('exportToast').classList.remove('vis');
+  if(selRect){selRect.remove();selRect=null}
+}
+
+$('exportCancel').addEventListener('click',exitDrawMode);
+
+// Draw rectangle on the map container
+const mapEl=document.getElementById('map');
+mapEl.addEventListener('mousedown',e=>{
+  if(!drawActive)return;
+  const rect=mapEl.getBoundingClientRect();
+  drawStart={x:e.clientX-rect.left,y:e.clientY-rect.top};
+  selRect=document.createElement('div');
+  selRect.className='export-sel';
+  mapEl.appendChild(selRect);
+});
+mapEl.addEventListener('mousemove',e=>{
+  if(!drawActive||!drawStart||!selRect)return;
+  const rect=mapEl.getBoundingClientRect();
+  const cx=e.clientX-rect.left,cy=e.clientY-rect.top;
+  const x=Math.min(drawStart.x,cx),y=Math.min(drawStart.y,cy);
+  const w=Math.abs(cx-drawStart.x),h=Math.abs(cy-drawStart.y);
+  selRect.style.left=x+'px';selRect.style.top=y+'px';
+  selRect.style.width=w+'px';selRect.style.height=h+'px';
+});
+mapEl.addEventListener('mouseup',async e=>{
+  if(!drawActive||!drawStart)return;
+  const rect=mapEl.getBoundingClientRect();
+  const cx=e.clientX-rect.left,cy=e.clientY-rect.top;
+  const x1=Math.min(drawStart.x,cx),y1=Math.min(drawStart.y,cy);
+  const x2=Math.max(drawStart.x,cx),y2=Math.max(drawStart.y,cy);
+  drawStart=null;
+
+  if(x2-x1<20||y2-y1<20){if(selRect){selRect.remove();selRect=null}return} // too small
+
+  exitDrawMode();
+
+  // Convert pixel box to lat/lng bounds
+  const nw=map.containerPointToLatLng([x1,y1]);
+  const se=map.containerPointToLatLng([x2,y2]);
+  const sw=L.latLng(se.lat,nw.lng);
+  const ne=L.latLng(nw.lat,se.lng);
+
+  await doExport(drawFmt,nw,se,x2-x1,y2-y1);
+});
+
+/* ── Tile math ── */
+function lng2tile(lng,z){return(lng+180)/360*Math.pow(2,z)}
+function lat2tile(lat,z){return(1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*Math.pow(2,z)}
+function tile2lng(x,z){return x/Math.pow(2,z)*360-180}
+function tile2lat(y,z){const n=Math.PI-2*Math.PI*y/Math.pow(2,z);return 180/Math.PI*Math.atan(.5*(Math.exp(n)-Math.exp(-n)))}
+
+/* ── Fetch a single tile as an Image ── */
+function fetchTileImg(z,x,y){
+  const subs=['a','b','c'];
+  const s=subs[(x+y)%3];
+  const url='https://'+s+'.basemaps.cartocdn.com/dark_all/'+z+'/'+x+'/'+y+'@2x.png';
+  return new Promise(res=>{
+    fetch(url,{mode:'cors'}).then(r=>r.blob()).then(blob=>{
+      const img=new Image();
+      img.onload=()=>res(img);
+      img.onerror=()=>res(null);
+      img.src=URL.createObjectURL(blob);
+    }).catch(()=>res(null));
+  });
+}
+
+/* ── Project lat/lng to pixel within the export canvas ── */
+function geoToPx(lat,lng,zoom,originTX,originTY,scale){
+  const px=(lng2tile(lng,zoom)-originTX)*256*scale;
+  const py=(lat2tile(lat,zoom)-originTY)*256*scale;
+  return[px,py];
+}
+
+/* ── Main export ── */
+async function doExport(fmt,nw,se,boxW,boxH){
+  sL('Rendering export…');
+  const zoom=map.getZoom();
+  const scale=2; // retina
+
+  // Tile range
+  const txMin=Math.floor(lng2tile(nw.lng,zoom));
+  const txMax=Math.floor(lng2tile(se.lng,zoom));
+  const tyMin=Math.floor(lat2tile(nw.lat,zoom));
+  const tyMax=Math.floor(lat2tile(se.lat,zoom));
+
+  // Pixel offset: where the nw corner falls within the top-left tile
+  const originTX=lng2tile(nw.lng,zoom);
+  const originTY=lat2tile(nw.lat,zoom);
+  const endTX=lng2tile(se.lng,zoom);
+  const endTY=lat2tile(se.lat,zoom);
+
+  const pxW=Math.round((endTX-originTX)*256*scale);
+  const pxH=Math.round((endTY-originTY)*256*scale);
+
+  const headerH=80;
+  const canvas=document.createElement('canvas');
+  canvas.width=pxW;
+  canvas.height=pxH+headerH;
+  const ctx=canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle='#05060d';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // ── Fetch and draw tiles ──
+  const tilePromises=[];
+  for(let ty=tyMin;ty<=tyMax;ty++){
+    for(let tx=txMin;tx<=txMax;tx++){
+      tilePromises.push(fetchTileImg(zoom,tx,ty).then(img=>{
+        if(!img)return;
+        const dx=Math.round((tx-originTX)*256*scale);
+        const dy=Math.round((ty-originTY)*256*scale)+headerH;
+        ctx.drawImage(img,dx,dy,256*scale,256*scale);
+      }));
+    }
+  }
+  await Promise.all(tilePromises);
+
+  // ── Draw watershed boundaries ──
+  ctx.save();
+  ctx.translate(0,headerH);
+  if($('tWS').checked){
+    wsGJ.features.forEach((f,i)=>{
+      const color=wcm[f.properties.name]||'#00b48c';
+      ctx.strokeStyle=color;
+      ctx.lineWidth=wsResolution==='subbasin'?1.5:3;
+      ctx.globalAlpha=0.85;
+      drawGeoJSONGeometry(ctx,f.geometry,zoom,originTX,originTY,scale);
+    });
+  }
+  ctx.globalAlpha=1;
+
+  // ── Draw trails ──
+  if(lTr){
+    lTr.eachLayer(ly=>{
+      const gj=ly.feature;
+      if(!gj||!gj.geometry)return;
+      ctx.strokeStyle='#8b5cf6';
+      ctx.lineWidth=2.5;
+      ctx.globalAlpha=0.6;
+      drawGeoJSONGeometry(ctx,gj.geometry,zoom,originTX,originTY,scale);
+    });
+  }
+  ctx.globalAlpha=1;
+
+  // ── Draw observation points ──
+  if($('tPt').checked){
+    species.forEach(s=>{
+      s.obs.features.forEach(f=>{
+        const[px,py]=geoToPx(f.geometry.coordinates[1],f.geometry.coordinates[0],zoom,originTX,originTY,scale);
+        if(px<-20||py<-20||px>pxW+20||py>pxH+20)return;
+        // Dark stroke
+        ctx.fillStyle='#05060d';
+        ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fill();
+        // Colored fill
+        ctx.fillStyle=s.color;
+        ctx.globalAlpha=0.85;
+        ctx.beginPath();ctx.arc(px,py,5.5,0,Math.PI*2);ctx.fill();
+        ctx.globalAlpha=1;
+      });
+    });
+  }
+  ctx.restore();
+
+  // ── Header bar ──
+  ctx.fillStyle='#0a0d1a';
+  ctx.fillRect(0,0,canvas.width,headerH);
+  ctx.strokeStyle='#00e8b4';
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,headerH-1);ctx.lineTo(canvas.width,headerH-1);ctx.stroke();
+
+  const fs=Math.max(16,Math.round(26*(pxW/1600)));
+  ctx.fillStyle='#e2e8f4';
+  ctx.font='bold '+fs+'px Rajdhani, sans-serif';
+  ctx.fillText('NH & VT Biodiversity Explorer',24,headerH*0.48);
+
+  const fs2=Math.max(12,Math.round(16*(pxW/1600)));
+  ctx.fillStyle='#8892b0';
+  ctx.font=fs2+'px Rajdhani, sans-serif';
+  const spNames=species.map(s=>s.sp.common).join(', ')||'No species selected';
+  const dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  ctx.fillText(spNames+' — '+dateStr,24,headerH*0.82);
+
+  // ── Legend overlay ──
+  if(species.length){
+    const lw=Math.max(220,Math.round(280*(pxW/1600)));
+    const lh=species.length*36+28;
+    const lx=canvas.width-lw-20,ly=headerH+20;
+    ctx.fillStyle='rgba(10,13,26,0.92)';
+    ctx.strokeStyle='rgba(42,51,88,0.8)';
+    ctx.lineWidth=1;
+    roundRect(ctx,lx,ly,lw,lh,8);ctx.fill();ctx.stroke();
+    const lfs=Math.max(12,Math.round(15*(pxW/1600)));
+    species.forEach((s,i)=>{
+      const y=ly+24+i*36;
+      ctx.fillStyle=s.color;
+      ctx.beginPath();ctx.arc(lx+20,y,7,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#e2e8f4';
+      ctx.font='500 '+lfs+'px Rajdhani, sans-serif';
+      ctx.fillText(s.sp.common+' ('+s.totalTrue.toLocaleString()+')',lx+38,y+5);
+    });
+  }
+
+  // ── Attribution ──
+  const afs=Math.max(9,Math.round(11*(pxW/1600)));
+  ctx.fillStyle='#4a5280';
+  ctx.font=afs+'px Rajdhani, sans-serif';
+  ctx.fillText('© CARTO © OpenStreetMap · iNaturalist · USGS WBD',24,canvas.height-10);
+
+  // ── Output ──
+  hL();
+
+  if(fmt==='png'){
+    downloadCanvas(canvas,'biodiversity-map.png','image/png');
+  }else if(fmt==='jpg'){
+    downloadCanvas(canvas,'biodiversity-map.jpg','image/jpeg');
+  }else if(fmt==='pdf'){
+    const{jsPDF}=window.jspdf;
+    const ratio=canvas.height/canvas.width;
+    const pdf=new jsPDF({orientation:ratio>0.75?'portrait':'landscape',unit:'mm'});
+    const pW2=pdf.internal.pageSize.getWidth();
+    const pH2=pW2*ratio;
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pW2,pH2);
+    pdf.save('biodiversity-map.pdf');
+  }
+}
+
+/* ── Draw GeoJSON geometry as canvas paths ── */
+function drawGeoJSONGeometry(ctx,geom,zoom,oTX,oTY,sc){
+  if(geom.type==='Polygon') geom.coordinates.forEach(ring=>drawRing(ctx,ring,zoom,oTX,oTY,sc));
+  else if(geom.type==='MultiPolygon') geom.coordinates.forEach(poly=>poly.forEach(ring=>drawRing(ctx,ring,zoom,oTX,oTY,sc)));
+  else if(geom.type==='LineString') drawLine(ctx,geom.coordinates,zoom,oTX,oTY,sc);
+  else if(geom.type==='MultiLineString') geom.coordinates.forEach(line=>drawLine(ctx,line,zoom,oTX,oTY,sc));
+}
+function drawRing(ctx,coords,z,oTX,oTY,sc){
+  ctx.beginPath();
+  coords.forEach((c,i)=>{const[px,py]=geoToPx(c[1],c[0],z,oTX,oTY,sc);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py)});
+  ctx.stroke();
+}
+function drawLine(ctx,coords,z,oTX,oTY,sc){
+  ctx.beginPath();
+  coords.forEach((c,i)=>{const[px,py]=geoToPx(c[1],c[0],z,oTX,oTY,sc);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py)});
+  ctx.stroke();
+}
 
 function downloadCanvas(canvas,filename,mime){
   const link=document.createElement('a');
   link.download=filename;
-  link.href=canvas.toDataURL(mime,0.95);
+  link.href=canvas.toDataURL(mime,0.92);
   link.click();
 }
 
