@@ -710,15 +710,35 @@ document.querySelectorAll('.export-opt').forEach(opt=>{
     try{
       // Capture the map container
       const mapEl=document.getElementById('map');
+
+      // html2canvas struggles with position:fixed — temporarily switch
+      var _origMapStyle=mapEl.style.cssText;
+      mapEl.style.position='absolute';
+      mapEl.style.left='0';
+      mapEl.style.top='0';
+      mapEl.style.right='auto';
+      mapEl.style.bottom='auto';
+      mapEl.style.width=mapEl.offsetWidth+'px';
+      mapEl.style.height=mapEl.offsetHeight+'px';
+
       const canvas=await html2canvas(mapEl,{
         useCORS:true,
         allowTaint:true,
         backgroundColor:'#05060d',
-        scale:2, // 2x for crisp output
+        scale:2,
         logging:false,
-        // Ignore Leaflet controls for cleaner export
+        scrollX:0,
+        scrollY:0,
+        x:0,
+        y:0,
+        width:mapEl.offsetWidth,
+        height:mapEl.offsetHeight,
         ignoreElements:el=>el.classList?.contains('leaflet-control-attribution')
       });
+
+      // Restore original positioning
+      mapEl.style.cssText=_origMapStyle;
+      map.invalidateSize();
 
       // Add a title bar and legend overlay to the canvas
       const out=document.createElement('canvas');
@@ -786,6 +806,7 @@ document.querySelectorAll('.export-opt').forEach(opt=>{
       }
     }catch(e){
       console.error('Export failed:',e);
+      if(_origMapStyle!==undefined){document.getElementById('map').style.cssText=_origMapStyle;map.invalidateSize()}
       alert('Export failed — some map tiles may block capture. Try zooming in first.');
     }
 
