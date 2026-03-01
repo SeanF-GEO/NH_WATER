@@ -336,9 +336,15 @@ out geom;`;
 }
 
 sL('Loading watersheds…');
-const wsGJ=ensureWGS84(await fj('nh_vt_8.geojson'));
+const wsParts=await Promise.all([
+  fj('nh_vt_part_1.geojson'),fj('nh_vt_part_2.geojson'),fj('nh_vt_part_3.geojson'),
+  fj('nh_vt_part_4.geojson'),fj('nh_vt_part_5.geojson')
+]);
+const wsGJ={type:'FeatureCollection',features:[]};
+wsParts.forEach(p=>{if(p){const rp=ensureWGS84(p);wsGJ.features.push(...(rp.features||[]))}});
 const stGJ=ensureWGS84(await fj('State.geojson'));
-if(!wsGJ){hL();alert('Could not load nh_vt_8.geojson');return}
+if(!wsGJ.features.length){hL();alert('Could not load watershed files');return}
+console.log('Loaded',wsGJ.features.length,'watersheds');
 
 const map=L.map('map',{center:[43.8,-72.1],zoom:8,minZoom:7,maxZoom:18});
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO &copy; OSM',maxZoom:19}).addTo(map);
